@@ -6,9 +6,11 @@ import Dashboard from './components/Dashboard'
 import MarketPage from './components/MarketsPage'
 import Deposit from './components/Deposit'
 import Withdraw from './components/Withdraw'
+import Home from './components/Home'
 function App() {
   return (
     <Routes>
+      <Route path='/' element={<Home/>}></Route>
       <Route path="/auth" element={<Auth />} />
       <Route path='/navbar' element={<Navbar/>}></Route>
       <Route path='/dashboard' element={<Dashboard/>}></Route>
