@@ -4,6 +4,7 @@ import Auth from './components/Auth'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
 import MarketPage from './components/MarketsPage'
+import Deposit from './components/Deposit'
 function App() {
   return (
     <Routes>
@@ -11,6 +12,7 @@ function App() {
       <Route path='/navbar' element={<Navbar/>}></Route>
       <Route path='/dashboard' element={<Dashboard/>}></Route>
       <Route path='/market' element={<MarketPage/>}></Route>
+      <Route path='/deposit' element={<Deposit/>}></Route>
 
     </Routes>
   )

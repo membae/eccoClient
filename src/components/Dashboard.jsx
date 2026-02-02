@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaExchangeAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "./Navbar";
 
 const WATCHLIST = ["bitcoin", "ethereum", "usd-coin"];
@@ -17,6 +18,8 @@ function Dashboard() {
   const [portfolio, setPortfolio] = useState([]);
   const [balance, setBalance] = useState(0);
   const [lastUpdated, setLastUpdated] = useState("");
+
+  const navigate = useNavigate();
 
   const fetchPrices = async (coins, setter) => {
     try {
@@ -53,9 +56,9 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-900 p-4 flex flex-col gap-4">
-        <DashboardNavbar/>
+      <DashboardNavbar />
 
-        <h1 className="text-green-500">Dashboard</h1>
+      <h1 className="text-green-500 text-lg font-semibold">Dashboard</h1>
 
       {/* 🔝 TOP SECTION */}
       <div className="h-[30vh] bg-white rounded-xl p-4 flex flex-col justify-between">
@@ -68,20 +71,22 @@ function Dashboard() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
-  <button className="px-4 py-2 bg-green-500 text-black rounded-lg font-semibold hover:bg-green-400">
-    Deposit
-  </button>
-  <button className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300">
-    Withdraw
-  </button>
-</div>
+            <button
+              onClick={() => navigate("/deposit")}
+              className="px-4 py-2 bg-green-500 text-black rounded-lg font-semibold hover:bg-green-400"
+            >
+              Deposit
+            </button>
 
+            <button className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300">
+              Withdraw
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 🔽 BOTTOM SECTION */}
       <div className="flex flex-col lg:flex-row gap-4">
-
         {/* 📌 WATCH LIST */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl p-4">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
