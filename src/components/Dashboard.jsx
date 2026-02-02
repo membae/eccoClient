@@ -67,14 +67,15 @@ function Dashboard() {
             ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </p>
 
-          <div className="flex gap-3 mt-4 flex-wrap">
-            <button className="px-4 py-2 bg-green-500 text-black rounded-lg font-semibold hover:bg-green-400 flex-1 sm:flex-none">
-              Deposit
-            </button>
-            <button className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 flex-1 sm:flex-none">
-              Withdraw
-            </button>
-          </div>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+  <button className="px-4 py-2 bg-green-500 text-black rounded-lg font-semibold hover:bg-green-400">
+    Deposit
+  </button>
+  <button className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300">
+    Withdraw
+  </button>
+</div>
+
         </div>
       </div>
 
