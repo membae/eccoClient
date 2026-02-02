@@ -1,6 +1,5 @@
 import React from 'react'
 import {Route,Routes} from 'react-router-dom'
-import Signup  from './Signup'
 import Auth from './components/Auth'
 function App() {
   return (
