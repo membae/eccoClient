@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthForm() {
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("login");
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -65,7 +68,7 @@ export default function AuthForm() {
     setSuccess("");
   };
 
-  /* ---------------- Submit to Backend ---------------- */
+  /* ---------------- LOGIN ---------------- */
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -85,15 +88,42 @@ export default function AuthForm() {
         return;
       }
 
+      /**
+       * EXPECTED BACKEND RESPONSE
+       * {
+       *   token: "...",
+       *   user: {
+       *     id,
+       *     full_name,
+       *     email,
+       *     country,
+       *     role,
+       *     balance: { balance: 0.0 }
+       *   }
+       * }
+       */
+
+      // ✅ STORE USER DATA
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
       setSuccess("Login successful!");
-      console.log("Login response:", data);
-      // TODO: Save token or redirect user
+
+      // ✅ REDIRECT TO DASHBOARD
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+
     } catch (err) {
       console.error(err);
       setError("Network error. Try again later.");
     }
   };
 
+  /* ---------------- SIGNUP ---------------- */
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -127,7 +157,6 @@ export default function AuthForm() {
       }
 
       setSuccess("Signup successful! You can now log in.");
-      console.log("Signup response:", data);
       setSignupForm({
         fullName: "",
         email: "",
@@ -135,6 +164,8 @@ export default function AuthForm() {
         password: "",
         confirmPassword: "",
       });
+
+      setActiveTab("login");
     } catch (err) {
       console.error(err);
       setError("Network error. Try again later.");
@@ -152,19 +183,18 @@ export default function AuthForm() {
           Your trusted platform for cryptocurrency trading
         </p>
 
-        {/* Tabs */}
         <div className="flex mb-6 bg-gray-800 rounded-lg overflow-hidden">
           <button
-            className={`flex-1 py-2 text-white font-medium ${
-              activeTab === "login" ? "bg-green-500" : "bg-gray-800"
+            className={`flex-1 py-2 text-white ${
+              activeTab === "login" ? "bg-green-500" : ""
             }`}
             onClick={() => setActiveTab("login")}
           >
             Login
           </button>
           <button
-            className={`flex-1 py-2 text-white font-medium ${
-              activeTab === "signup" ? "bg-green-500" : "bg-gray-800"
+            className={`flex-1 py-2 text-white ${
+              activeTab === "signup" ? "bg-green-500" : ""
             }`}
             onClick={() => setActiveTab("signup")}
           >
@@ -172,147 +202,29 @@ export default function AuthForm() {
           </button>
         </div>
 
-        {error && <p className="text-red-500 text-center mb-2">{error}</p>}
-        {success && <p className="text-green-500 text-center mb-2">{success}</p>}
+        {error && <p className="text-red-500 text-center">{error}</p>}
+        {success && <p className="text-green-500 text-center">{success}</p>}
 
-        {/* Login Form */}
         {activeTab === "login" && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Email
-              </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="your@email.com"
-                value={loginForm.email}
-                onChange={handleLoginChange}
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Password
-              </label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                value={loginForm.password}
-                onChange={handleLoginChange}
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 bg-green-500 hover:bg-green-600 rounded-lg text-white font-semibold mt-2 transition"
-            >
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={loginForm.email}
+              onChange={handleLoginChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={loginForm.password}
+              onChange={handleLoginChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <button className="w-full bg-green-500 py-3 rounded-lg text-white">
               Login
-            </button>
-          </form>
-        )}
-
-        {/* Signup Form */}
-        {activeTab === "signup" && (
-          <form onSubmit={handleSignupSubmit} className="space-y-4">
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Full Name
-              </label>
-              <input
-                name="fullName"
-                value={signupForm.fullName}
-                onChange={handleSignupChange}
-                placeholder="John Doe"
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Email
-              </label>
-              <input
-                name="email"
-                type="email"
-                value={signupForm.email}
-                onChange={handleSignupChange}
-                placeholder="you@email.com"
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Phone Number
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={selectedCountry?.code || ""}
-                  onChange={(e) =>
-                    setSelectedCountry(
-                      countries.find((c) => c.code === e.target.value)
-                    )
-                  }
-                  className="w-32 px-3 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-                >
-                  {countries.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.flag} {c.code} {c.name}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  name="phone"
-                  value={signupForm.phone}
-                  onChange={handleSignupChange}
-                  placeholder="712345678"
-                  className="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-                />
-              </div>
-
-              {selectedCountry && (
-                <p className="text-gray-200 text-sm mt-1">
-                  {selectedCountry.flag} {selectedCountry.name}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Password
-              </label>
-              <input
-                name="password"
-                type="password"
-                value={signupForm.password}
-                onChange={handleSignupChange}
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-gray-200 text-sm font-medium mb-1 block">
-                Confirm Password
-              </label>
-              <input
-                name="confirmPassword"
-                type="password"
-                value={signupForm.confirmPassword}
-                onChange={handleSignupChange}
-                className={`w-full px-4 py-3 rounded-lg bg-gray-800 text-white border ${
-                  error ? "border-red-500" : "border-gray-700"
-                } focus:ring-2 focus:ring-green-500 outline-none`}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 bg-green-500 hover:bg-green-600 rounded-lg text-white font-semibold mt-2 transition"
-            >
-              Sign Up
             </button>
           </form>
         )}
