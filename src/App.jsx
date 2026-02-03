@@ -8,6 +8,7 @@ import Deposit from './components/Deposit'
 import Withdraw from './components/Withdraw'
 import Home from './components/Home'
 import Profile from './components/Profile'
+import Logout from './components/Logout'
 function App() {
   return (
     <Routes>
@@ -19,6 +20,7 @@ function App() {
       <Route path='/deposit' element={<Deposit/>}></Route>
       <Route path='/withdraw' element={<Withdraw/>}></Route>
       <Route path='/profile' element={<Profile/>}></Route>
+      <Route path='/logout' element={<Logout/>}></Route>
 
     </Routes>
   )

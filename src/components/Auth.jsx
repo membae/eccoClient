@@ -88,35 +88,14 @@ export default function AuthForm() {
         return;
       }
 
-      /**
-       * EXPECTED BACKEND RESPONSE
-       * {
-       *   token: "...",
-       *   user: {
-       *     id,
-       *     full_name,
-       *     email,
-       *     country,
-       *     role,
-       *     balance: { balance: 0.0 }
-       *   }
-       * }
-       */
-
-      // ✅ STORE USER DATA
+      // ✅ Store user data and token
       localStorage.setItem("user", JSON.stringify(data.user));
-
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      if (data.token) localStorage.setItem("token", data.token);
 
       setSuccess("Login successful!");
 
-      // ✅ REDIRECT TO DASHBOARD
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
-
+      // ✅ Redirect to dashboard
+      setTimeout(() => navigate("/dashboard"), 500);
     } catch (err) {
       console.error(err);
       setError("Network error. Try again later.");
@@ -183,6 +162,7 @@ export default function AuthForm() {
           Your trusted platform for cryptocurrency trading
         </p>
 
+        {/* Tabs */}
         <div className="flex mb-6 bg-gray-800 rounded-lg overflow-hidden">
           <button
             className={`flex-1 py-2 text-white ${
@@ -205,6 +185,7 @@ export default function AuthForm() {
         {error && <p className="text-red-500 text-center">{error}</p>}
         {success && <p className="text-green-500 text-center">{success}</p>}
 
+        {/* LOGIN FORM */}
         {activeTab === "login" && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <input
@@ -225,6 +206,70 @@ export default function AuthForm() {
             />
             <button className="w-full bg-green-500 py-3 rounded-lg text-white">
               Login
+            </button>
+          </form>
+        )}
+
+        {/* SIGNUP FORM */}
+        {activeTab === "signup" && (
+          <form onSubmit={handleSignupSubmit} className="space-y-4">
+            <input
+              name="fullName"
+              placeholder="Full Name"
+              value={signupForm.fullName}
+              onChange={handleSignupChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={signupForm.email}
+              onChange={handleSignupChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <div className="flex gap-2">
+              <select
+                value={selectedCountry?.code || ""}
+                onChange={(e) =>
+                  setSelectedCountry(
+                    countries.find((c) => c.code === e.target.value)
+                  )
+                }
+                className="w-32 px-3 py-3 rounded-lg bg-gray-800 text-white"
+              >
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.code}
+                  </option>
+                ))}
+              </select>
+              <input
+                name="phone"
+                placeholder="Phone Number"
+                value={signupForm.phone}
+                onChange={handleSignupChange}
+                className="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white"
+              />
+            </div>
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={signupForm.password}
+              onChange={handleSignupChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <input
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirm Password"
+              value={signupForm.confirmPassword}
+              onChange={handleSignupChange}
+              className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
+            />
+            <button className="w-full bg-green-500 py-3 rounded-lg text-white">
+              Sign Up
             </button>
           </form>
         )}
