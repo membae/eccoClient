@@ -10,6 +10,7 @@ import Home from './components/Home'
 import Profile from './components/Profile'
 import Logout from './components/Logout'
 import Bot from './components/Bot'
+import Configure from './components/Configure'
 function App() {
   return (
     <Routes>
@@ -23,6 +24,7 @@ function App() {
       <Route path='/profile' element={<Profile/>}></Route>
       <Route path='/logout' element={<Logout/>}></Route>
       <Route path='/bot' element={<Bot/>}></Route>
+      <Route path='/configure' element={<Configure/>}></Route>
 
     </Routes>
   )
