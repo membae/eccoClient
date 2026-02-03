@@ -1,0 +1,100 @@
+import React from "react";
+
+const bots = [
+  {
+    name: "Bitcoin Accumulation",
+    frequency: "Weekly",
+    type: "DCA",
+    description: "Dollar-cost averaging into Bitcoin on a weekly basis",
+    risk: "Low",
+    status: "Not Configured",
+  },
+  {
+    name: "ETH DCA Pro",
+    frequency: "Daily",
+    type: "DCA",
+    description: "Dynamic DCA based on RSI and volume indicators",
+    risk: "Medium",
+    status: "Not Configured",
+  },
+];
+
+export default function BotDashboard() {
+  return (
+    <div className="p-6 bg-gray-900 min-h-screen">
+      {/* Automated Trading Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-xl p-6 mb-8">
+        <h2 className="text-2xl font-bold mb-2">Automated Trading</h2>
+        <p className="text-sm mb-4">Create and manage algorithmic trading strategies</p>
+        <div className="flex flex-wrap items-center gap-8 mb-4">
+          <div>
+            <p className="text-2xl font-bold">4</p>
+            <p className="text-sm">Total Bots</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">2</p>
+            <p className="text-sm">Active</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-green-500">+4.8%</p>
+            <p className="text-sm">Weekly Return</p>
+          </div>
+        </div>
+        <button className="bg-white text-blue-600 font-semibold px-4 py-2 rounded hover:bg-gray-200 transition">
+          Create New Bot →
+        </button>
+      </div>
+
+      {/* Dollar-Cost Averaging Bots */}
+      <div className="mb-4">
+        <h3 className="text-xl font-bold text-white mb-1">Dollar-Cost Averaging Bots</h3>
+        <p className="text-gray-300 mb-4 text-sm">Regular purchases of assets regardless of price</p>
+        <button className="bg-green-400 text-gray-900 font-semibold px-4 py-2 rounded mb-4 hover:bg-green-500 transition">
+          Create DCA Bot
+        </button>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {bots.map((bot) => (
+            <div
+              key={bot.name}
+              className="bg-gray-800 p-4 rounded-lg flex flex-col justify-between"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="text-lg font-semibold text-white">{bot.name}</h4>
+                  <p className="text-gray-400 text-sm">
+                    {bot.frequency} • {bot.type}
+                  </p>
+                  <p className="text-gray-300 mt-2 text-sm">{bot.description}</p>
+                  <div className="mt-2 text-gray-400 text-sm flex justify-between w-2/3">
+                    <span>
+                      <strong>Risk:</strong> {bot.risk}
+                    </span>
+                    <span>
+                      <strong>Performance:</strong> --
+                    </span>
+                  </div>
+                </div>
+                <span className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">
+                  {bot.status}
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                <button className="bg-gray-700 text-gray-300 px-3 py-2 rounded hover:bg-gray-600 transition flex-1">
+                  Configure
+                </button>
+                <button
+                  className="bg-gray-500 text-gray-200 px-3 py-2 rounded cursor-not-allowed flex-1"
+                  disabled
+                >
+                  Start {bot.type} Bot
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ import Withdraw from './components/Withdraw'
 import Home from './components/Home'
 import Profile from './components/Profile'
 import Logout from './components/Logout'
+import Bot from './components/Bot'
 function App() {
   return (
     <Routes>
@@ -21,6 +22,7 @@ function App() {
       <Route path='/withdraw' element={<Withdraw/>}></Route>
       <Route path='/profile' element={<Profile/>}></Route>
       <Route path='/logout' element={<Logout/>}></Route>
+      <Route path='/bot' element={<Bot/>}></Route>
 
     </Routes>
   )
