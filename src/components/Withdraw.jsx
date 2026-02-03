@@ -1,16 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DashboardNavbar from "./Navbar";
 
 function Withdraw() {
   const [method, setMethod] = useState("crypto");
   const [selectedCrypto, setSelectedCrypto] = useState("bitcoin");
-  const [amount, setAmount] = useState(100);
+  const [amount, setAmount] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0);
   const [error, setError] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // This should come from backend later
-  const availableBalance = 0.0;
+  const [user, setUser] = useState(null);
 
-  // Different wallet address per crypto
+  // Fetch user balance from localStorage
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    setUser(storedUser);
+    if (storedUser.balance && typeof storedUser.balance.balance === "number") {
+      setAvailableBalance(storedUser.balance.balance);
+    }
+  }, []);
+
+  // Wallet addresses
   const cryptoAddresses = {
     bitcoin: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
     usdt: "TQp9XK6GZ8kUSDTExampleAddress123",
@@ -20,7 +31,9 @@ function Withdraw() {
   const handleAmountChange = (value) => {
     setAmount(value);
 
-    if (value <= 0) {
+    if (availableBalance < 50) {
+      setError("Minimum balance of $50 required to withdraw.");
+    } else if (value <= 0) {
       setError("Enter a valid withdrawal amount.");
     } else if (value > availableBalance) {
       setError("Insufficient balance for this withdrawal.");
@@ -29,11 +42,52 @@ function Withdraw() {
     }
   };
 
-  const isDisabled = !!error || amount > availableBalance;
+  const isDisabled =
+    !!error || amount > availableBalance || availableBalance < 50 || processing;
+
+  const handleWithdraw = async () => {
+    if (isDisabled) return;
+
+    setProcessing(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      // Send negative amount to backend for withdrawal
+      const res = await fetch(
+        `http://127.0.0.1:5000/users/${user.id}/balance`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount: (-amount).toString() }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Withdrawal failed.");
+
+      // Update balance locally
+      const newBalance = availableBalance - amount;
+      setAvailableBalance(newBalance);
+      const updatedUser = { ...user, balance: { ...user.balance, balance: newBalance } };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setSuccess(true);
+      setAmount(0);
+    } catch (err) {
+      console.error(err);
+      setError("Withdrawal failed. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
-    <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white">
-        <DashboardNavbar/>
+    <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white min-h-screen">
+      <DashboardNavbar />
+
       {/* Header */}
       <h2 className="text-xl font-semibold">Withdraw Funds</h2>
       <p className="text-sm text-blue-200 mt-1">
@@ -44,6 +98,11 @@ function Withdraw() {
       <div className="mt-5 bg-blue-800 rounded-xl p-4 text-center">
         <p className="text-2xl font-bold">${availableBalance.toFixed(2)}</p>
         <p className="text-sm text-blue-200">Available Balance</p>
+        {availableBalance < 50 && (
+          <p className="text-red-400 text-sm mt-1">
+            Balance below $50 — withdrawals not allowed
+          </p>
+        )}
       </div>
 
       {/* Method Tabs */}
@@ -67,172 +126,113 @@ function Withdraw() {
         ))}
       </div>
 
-      {/* ================= CRYPTO ================= */}
-      {method === "crypto" && (
-        <>
-          {/* Crypto Selector */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
-            {[
-              { id: "bitcoin", icon: "₿", name: "Bitcoin" },
-              { id: "usdt", icon: "₮", name: "USDT" },
-              { id: "ethereum", icon: "Ξ", name: "Ethereum" },
-            ].map((crypto) => (
-              <div
-                key={crypto.id}
-                onClick={() => setSelectedCrypto(crypto.id)}
-                className={`cursor-pointer rounded-xl p-4 text-center border transition ${
-                  selectedCrypto === crypto.id
-                    ? "border-blue-400 bg-blue-800"
-                    : "border-blue-700 hover:border-blue-400"
-                }`}
-              >
-                <div className="text-3xl mb-1">{crypto.icon}</div>
-                <div className="text-sm font-medium">{crypto.name}</div>
-              </div>
-            ))}
-          </div>
+      {/* Amount Input */}
+      <div className="mt-6">
+        <label className="text-sm text-blue-200">Amount (USD)</label>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => handleAmountChange(Number(e.target.value))}
+          className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+          disabled={processing}
+        />
+        {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
+        {success && <p className="text-sm text-green-400 mt-1">Withdrawal Successful!</p>}
+      </div>
 
-          {/* Amount */}
-          <div className="mt-6">
-            <label className="text-sm text-blue-200">Amount (USD)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => handleAmountChange(Number(e.target.value))}
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-            {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
-          </div>
+      {/* Method-specific fields */}
+      {method === "crypto" && (
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          {["bitcoin", "usdt", "ethereum"].map((crypto) => (
+            <div
+              key={crypto}
+              onClick={() => setSelectedCrypto(crypto)}
+              className={`cursor-pointer rounded-xl p-4 text-center border transition ${
+                selectedCrypto === crypto
+                  ? "border-blue-400 bg-blue-800"
+                  : "border-blue-700 hover:border-blue-400"
+              }`}
+            >
+              <div className="text-3xl mb-1">
+                {crypto === "bitcoin" ? "₿" : crypto === "usdt" ? "₮" : "Ξ"}
+              </div>
+              <div className="text-sm font-medium">{crypto.toUpperCase()}</div>
+            </div>
+          ))}
 
           {/* Wallet Address */}
-          <div className="mt-5">
-            <label className="text-sm text-blue-200">Your Wallet Address</label>
+          <div className="col-span-3 mt-4">
+            <label className="text-sm text-blue-200">Wallet Address</label>
             <input
               readOnly
               value={cryptoAddresses[selectedCrypto]}
               className="w-full mt-1 px-4 py-2 rounded-lg bg-black text-white border border-gray-700 text-sm"
             />
           </div>
-
-          <button
-            disabled={isDisabled}
-            className={`w-full mt-6 py-3 rounded-lg font-semibold transition ${
-              isDisabled
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-500"
-            }`}
-          >
-            Withdraw
-          </button>
-        </>
+        </div>
       )}
 
-      {/* ================= BANK ================= */}
       {method === "bank" && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm text-blue-200">Amount (USD)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => handleAmountChange(Number(e.target.value))}
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-            {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
-          </div>
-
-          <div>
-            <label className="text-sm text-blue-200">Bank Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Chase Bank"
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-blue-200">Account Number</label>
-            <input
-              type="text"
-              placeholder="1234567890"
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-blue-200">
-              Account Holder Name
-            </label>
-            <input
-              type="text"
-              placeholder="John Doe"
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-blue-200">
-              SWIFT Code (Optional)
-            </label>
-            <input
-              type="text"
-              placeholder="CHASUS33"
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-          </div>
-
-          <button
-            disabled={isDisabled}
-            className={`w-full mt-4 py-3 rounded-lg font-semibold ${
-              isDisabled
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-500"
-            }`}
-          >
-            Withdraw
-          </button>
+        <div className="mt-4 space-y-3">
+          <input
+            type="text"
+            placeholder="Bank Name"
+            className="w-full px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+            disabled={processing}
+          />
+          <input
+            type="text"
+            placeholder="Account Number"
+            className="w-full px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+            disabled={processing}
+          />
+          <input
+            type="text"
+            placeholder="Account Holder Name"
+            className="w-full px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+            disabled={processing}
+          />
+          <input
+            type="text"
+            placeholder="SWIFT Code (Optional)"
+            className="w-full px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+            disabled={processing}
+          />
         </div>
       )}
 
-      {/* ================= MPESA ================= */}
       {method === "mpesa" && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm text-blue-200">Amount (USD)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => handleAmountChange(Number(e.target.value))}
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-            {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
-          </div>
-
-          <div>
-            <label className="text-sm text-blue-200">
-              M-Pesa Phone Number
-            </label>
-            <input
-              type="text"
-              placeholder="2547XXXXXXXX"
-              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-            />
-          </div>
-
-          <button
-            disabled={isDisabled}
-            className={`w-full py-3 rounded-lg font-semibold ${
-              isDisabled
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-500"
-            }`}
-          >
-            Withdraw
-          </button>
+        <div className="mt-4">
+          <input
+            type="text"
+            placeholder="M-Pesa Phone Number"
+            className="w-full px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+            disabled={processing}
+          />
         </div>
       )}
 
-      {/* ================= PENDING ================= */}
+      {/* Withdraw Button */}
+      <button
+        onClick={handleWithdraw}
+        disabled={isDisabled}
+        className={`w-full mt-6 py-3 rounded-lg font-semibold transition ${
+          isDisabled
+            ? "bg-gray-600 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-500"
+        }`}
+      >
+        {processing ? (
+          <span className="flex items-center justify-center gap-2">
+            Processing...
+            <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+          </span>
+        ) : (
+          "Withdraw"
+        )}
+      </button>
+
+      {/* Pending Section */}
       <div className="mt-8 bg-blue-800 rounded-xl p-4 text-center">
         <p className="font-semibold mb-2">Pending Withdrawals</p>
         <div className="text-3xl mb-2">📭</div>
