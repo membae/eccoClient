@@ -6,6 +6,7 @@ import {
   FaGlobe,
   FaWallet,
   FaSignOutAlt,
+  FaArrowLeft,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -21,9 +22,14 @@ function Profile() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    navigate("/logout");
+    const confirmLogout = window.confirm(
+      "Are you sure you want to logout?"
+    );
+    if (confirmLogout) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      navigate("/logout");
+    }
   };
 
   if (!user) {
@@ -37,6 +43,14 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200 p-6">
       <div className="max-w-xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-2 text-gray-200 mb-4 hover:text-green-400 transition"
+        >
+          <FaArrowLeft /> Back to Dashboard
+        </button>
+
         <h2 className="text-2xl font-bold text-green-400 mb-6 flex items-center gap-2">
           <FaUser />
           My Profile
