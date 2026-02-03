@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaExchangeAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "./Navbar";
@@ -21,6 +21,16 @@ function Dashboard() {
 
   const navigate = useNavigate();
 
+  // Fetch user balance from localStorage
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.balance && typeof user.balance.balance === "number") {
+      setBalance(user.balance.balance);
+    }
+    refreshAll();
+  }, []);
+
+  // Fetch coin prices from CoinGecko
   const fetchPrices = async (coins, setter) => {
     try {
       const res = await fetch(
@@ -38,21 +48,12 @@ function Dashboard() {
     }
   };
 
+  // Refresh watchlist and portfolio
   const refreshAll = async () => {
-    const watch = await fetchPrices(WATCHLIST, setWatchlist);
-    const portfolioData = await fetchPrices(YOUR_CRYPTO, setPortfolio);
-
-    const total = (portfolioData || []).reduce((sum, coin) => {
-      return sum + (HOLDINGS[coin.id] || 0) * coin.current_price;
-    }, 0);
-
-    setBalance(total);
+    await fetchPrices(WATCHLIST, setWatchlist);
+    await fetchPrices(YOUR_CRYPTO, setPortfolio);
     setLastUpdated(new Date().toLocaleString());
   };
-
-  useEffect(() => {
-    refreshAll();
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 p-4 flex flex-col gap-4">
@@ -60,7 +61,7 @@ function Dashboard() {
 
       <h1 className="text-green-500 text-lg font-semibold">Dashboard</h1>
 
-      {/* 🔝 TOP SECTION */}
+      {/* 🔝 Real Portfolio */}
       <div className="h-[30vh] bg-white rounded-xl p-4 flex flex-col justify-between">
         <h1 className="text-xl font-bold text-gray-900">Real Portfolio</h1>
 
@@ -78,28 +79,26 @@ function Dashboard() {
               Deposit
             </button>
 
-            <button 
+            <button
               onClick={() => navigate("/withdraw")}
-              className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300">
+              className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300"
+            >
               Withdraw
             </button>
           </div>
         </div>
       </div>
 
-      {/* 🔽 BOTTOM SECTION */}
+      {/* 🔽 Bottom Section */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* 📌 WATCH LIST */}
+        {/* Watch List */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl p-4">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
             Watch List
           </h2>
 
           {watchlist.map((coin) => (
-            <div
-              key={coin.id}
-              className="py-3 border-b border-gray-200"
-            >
+            <div key={coin.id} className="py-3 border-b border-gray-200">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-semibold text-gray-900">
@@ -132,7 +131,7 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* 💼 YOUR CRYPTO */}
+        {/* Your Crypto */}
         <div className="w-full lg:w-2/3 bg-white rounded-xl p-4 flex flex-col">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
             Your Crypto
@@ -140,7 +139,7 @@ function Dashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {portfolio.map((coin) => {
-              const amount = HOLDINGS[coin.id];
+              const amount = HOLDINGS[coin.id] || 0;
               const value = amount * coin.current_price;
 
               return (
@@ -160,9 +159,7 @@ function Dashboard() {
                     </p>
                   </div>
 
-                  <p className="text-sm text-gray-600">
-                    Amount: {amount}
-                  </p>
+                  <p className="text-sm text-gray-600">Amount: {amount}</p>
                   <p className="font-semibold text-gray-900">
                     Value: ${value.toLocaleString()}
                   </p>
