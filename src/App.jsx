@@ -7,6 +7,7 @@ import MarketPage from './components/MarketsPage'
 import Deposit from './components/Deposit'
 import Withdraw from './components/Withdraw'
 import Home from './components/Home'
+import Profile from './components/Profile'
 function App() {
   return (
     <Routes>
@@ -17,6 +18,7 @@ function App() {
       <Route path='/market' element={<MarketPage/>}></Route>
       <Route path='/deposit' element={<Deposit/>}></Route>
       <Route path='/withdraw' element={<Withdraw/>}></Route>
+      <Route path='/profile' element={<Profile/>}></Route>
 
     </Routes>
   )
