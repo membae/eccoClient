@@ -5,9 +5,9 @@ import {
   FaChartLine,
   FaBolt,
   FaRobot,
-  FaSignOutAlt,
   FaBars,
   FaExchangeAlt,
+  FaUser,
 } from "react-icons/fa";
 
 export default function DashboardNavbar() {
@@ -20,7 +20,7 @@ export default function DashboardNavbar() {
     { name: "Spot Trading", icon: FaBolt, path: "/dashboard" },
     { name: "Futures", icon: FaExchangeAlt, path: "/dashboard" },
     { name: "Bots", icon: FaRobot, path: "/bots" },
-    { name: "Logout", icon: FaSignOutAlt, path: "/logout" },
+    { name: "My Profile", icon: FaUser, path: "/profile" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -31,7 +31,7 @@ export default function DashboardNavbar() {
       <nav className="bg-gray-900 text-gray-300 px-6 py-3 flex items-center justify-between shadow-md fixed top-0 left-0 right-0 z-50">
         {/* Logo */}
         <Link
-          to="/"
+          to="/dashboard"
           className="flex items-center gap-2 text-green-400 font-bold text-lg"
         >
           <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-black font-bold">
