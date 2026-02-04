@@ -11,6 +11,7 @@ import Profile from './components/Profile'
 import Logout from './components/Logout'
 import Bot from './components/Bot'
 import Configure from './components/Configure'
+import DcaBot from './components/DcaBot'
 function App() {
   return (
     <Routes>
@@ -26,6 +27,7 @@ function App() {
       <Route path='/bot' element={<Bot/>}></Route>
       {/* <Route path='/configure' element={<Configure/>}></Route> */}
       <Route path="/configure/:botName" element={<Configure />} ></Route>
+      <Route path='/dcabot' element={<DcaBot/>}></Route>
 
 
     </Routes>
