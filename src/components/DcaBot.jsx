@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   FaHome,
   FaChartLine,
@@ -5,109 +6,205 @@ import {
   FaRobot,
   FaUser,
 } from "react-icons/fa";
+import DashboardNavbar from "./Navbar";
 
 export default function BotRunning() {
+  const botName = "Bitcoin Accumulation";
+
+  /* ---------- LOCAL STORAGE ---------- */
+  const user =
+    JSON.parse(localStorage.getItem("user")) || {
+      id: null,
+      balance: { balance: 0 },
+    };
+
+  const botConfigs =
+    JSON.parse(localStorage.getItem("botConfigs")) || {
+      "Bitcoin Accumulation": { amount: 100 },
+    };
+
+  const configuredAmount = botConfigs[botName]?.amount || 0;
+
+  /* ---------- STATE ---------- */
+  const [botAmount, setBotAmount] = useState(configuredAmount);
+  const [trades, setTrades] = useState(0);
+  const [winRate, setWinRate] = useState(70);
+  const [logs, setLogs] = useState([]);
+  const [running, setRunning] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const intervalRef = useRef(null);
+
+  /* ---------- DERIVED ---------- */
+  const totalPL = +(botAmount - configuredAmount).toFixed(2);
+  const isProfit = totalPL >= 0;
+
+  /* ---------- BOT ENGINE ---------- */
+  useEffect(() => {
+    startBot();
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  const startBot = () => {
+    if (intervalRef.current) return;
+
+    intervalRef.current = setInterval(() => {
+      const gain = +(Math.random() * 1).toFixed(2);
+      const winFluctuation = (Math.random() * 2 - 1).toFixed(1);
+
+      setBotAmount((a) => +(a + gain).toFixed(2));
+      setTrades((t) => t + 1);
+      setWinRate((w) =>
+        Math.min(95, Math.max(50, +(w + +winFluctuation).toFixed(1)))
+      );
+
+      addLog(`📈 Trade executed → +$${gain}`);
+    }, 3000);
+  };
+
+  const pauseBot = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setRunning(false);
+    addLog("⏸ Bot paused");
+  };
+
+  const stopBot = async () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setRunning(false);
+    setLoading(true);
+
+    try {
+      // Update user balance in backend
+      const res = await fetch(
+        `http://127.0.0.1:5000/users/${user.id}/balance`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: +botAmount.toFixed(2) }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update balance");
+      const updatedBalance = await res.json();
+
+      // Update user in localStorage
+      const updatedUser = { ...user, balance: updatedBalance };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Remove bot config from localStorage
+      const updatedBotConfigs = { ...botConfigs };
+      delete updatedBotConfigs[botName];
+      localStorage.setItem("botConfigs", JSON.stringify(updatedBotConfigs));
+
+      // Reset bot state
+      setBotAmount(0);
+      setTrades(0);
+      setWinRate(70);
+      addLog("🛑 Bot stopped");
+      addLog(`💰 $${configuredAmount} credited to wallet`);
+    } catch (err) {
+      console.error(err);
+      addLog("❌ Failed to update wallet balance");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addLog = (message) => {
+    setLogs((prev) => [
+      { time: new Date().toLocaleTimeString(), message },
+      ...prev,
+    ]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      <DashboardNavbar />
+
       {/* HEADER */}
       <div className="p-4 border-b border-gray-800">
-        <h1 className="text-lg font-semibold">Bitcoin Accumulation Bot</h1>
-        <p className="text-xs text-gray-400">
-          Bot ID: dca-1 • Account: Real
-        </p>
+        <h1 className="text-lg font-semibold">{botName} Bot</h1>
+        <p className="text-xs text-gray-400">Bot ID: dca-1 • Account: Real</p>
       </div>
 
       {/* STATUS */}
-      <div className="bg-green-500 text-black text-center py-2 font-semibold">
-        Running
+      <div
+        className={`text-center py-2 font-semibold ${
+          running ? "bg-green-500 text-black" : "bg-red-600"
+        }`}
+      >
+        {running ? "Running" : "Stopped"}
       </div>
 
       {/* CONTROLS */}
       <div className="flex gap-3 p-4">
         <button
-          disabled
-          className="flex-1 bg-gray-700 text-gray-400 py-2 rounded opacity-60"
+          onClick={startBot}
+          disabled={running || loading}
+          className="flex-1 bg-gray-700 py-2 rounded opacity-50 disabled:opacity-50"
         >
           Start Bot
         </button>
-        <button className="flex-1 bg-yellow-500 text-black py-2 rounded font-semibold">
+
+        <button
+          onClick={pauseBot}
+          disabled={loading || !running}
+          className="flex-1 bg-yellow-500 text-black py-2 rounded font-semibold"
+        >
           Pause Bot
         </button>
-        <button className="flex-1 bg-red-600 py-2 rounded font-semibold">
-          Stop Bot
+
+        <button
+          onClick={stopBot}
+          disabled={loading}
+          className="flex-1 bg-red-600 py-2 rounded font-semibold"
+        >
+          {loading ? "Stopping..." : "Stop Bot"}
         </button>
       </div>
 
       {/* STATS */}
       <div className="grid grid-cols-2 gap-4 px-4">
-        <StatCard label="Total P/L" value="+$0.00" accent="green" />
-        <StatCard label="Total Runs" value="1" accent="blue" />
-        <StatCard label="Total Trades" value="0" accent="purple" />
-        <StatCard label="Win Rate" value="0.0%" accent="yellow" />
-        <StatCard label="Balance" value="$90.03" accent="cyan" />
+        <StatCard label="Bot Balance" value={`$${botAmount}`} accent="green" />
+        <StatCard
+          label="Total P/L"
+          value={`${isProfit ? "+" : "-"}$${Math.abs(totalPL)}`}
+          accent={isProfit ? "green" : "red"}
+        />
+        <StatCard label="Total Trades" value={trades} accent="purple" />
+        <StatCard label="Win Rate" value={`${winRate}%`} accent="yellow" />
       </div>
 
       {/* LOGS */}
       <div className="flex-1 px-4 mt-4 mb-20">
-        <h3 className="text-sm text-gray-400 mb-2">
-          Bot Logs <span className="text-xs">(7 entries)</span>
-        </h3>
-
+        <h3 className="text-sm text-gray-400 mb-2">Bot Logs ({logs.length})</h3>
         <div className="bg-black rounded-lg p-3 space-y-2 text-xs text-green-400 max-h-60 overflow-y-auto">
-          <p>[20:32:35] 🚀 High-Frequency Trading System loaded</p>
-          <p>[20:32:35] 💰 Account Balance: $90.03</p>
-          <p>[20:32:36] ⚙ BASIC Tier Active - Optimized for consistency</p>
-          <p>[20:32:37] 📊 Base win rate: 70%</p>
-          <p>[20:32:38] 🤖 Trading Bot activated</p>
-          <p>[20:32:39] 📈 Strategy: High-frequency scalping</p>
-          <p>[20:32:40] ✅ System ready</p>
-        </div>
-      </div>
-
-      {/* BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800">
-        <div className="flex justify-around py-2 text-gray-400 text-xs">
-          <NavItem icon={<FaHome />} label="Home" />
-          <NavItem icon={<FaChartLine />} label="Markets" />
-          <NavItem icon={<FaBolt />} label="Trade" />
-          <NavItem icon={<FaRobot />} label="Bots" active />
-          <NavItem icon={<FaUser />} label="Profile" />
+          {logs.map((log, i) => (
+            <p key={i}>
+              [{log.time}] {log.message}
+            </p>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------- Components ---------- */
-
+/* ---------- COMPONENTS ---------- */
 function StatCard({ label, value, accent }) {
   const accents = {
     green: "border-green-500",
-    blue: "border-blue-500",
     purple: "border-purple-500",
     yellow: "border-yellow-500",
-    cyan: "border-cyan-500",
+    red: "border-red-500",
   };
 
   return (
-    <div
-      className={`bg-gray-900 border-l-4 ${accents[accent]} rounded p-3`}
-    >
+    <div className={`bg-gray-900 border-l-4 ${accents[accent]} rounded p-3`}>
       <p className="text-xs text-gray-400">{label}</p>
       <p className="text-lg font-bold">{value}</p>
-    </div>
-  );
-}
-
-function NavItem({ icon, label, active }) {
-  return (
-    <div
-      className={`flex flex-col items-center ${
-        active ? "text-green-400" : ""
-      }`}
-    >
-      <div className="text-lg">{icon}</div>
-      <span>{label}</span>
     </div>
   );
 }

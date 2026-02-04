@@ -41,8 +41,10 @@ export default function BotDashboard() {
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen">
+      {/* Navbar */}
+      <DashboardNavbar />
+
       {/* Automated Trading Section */}
-      <DashboardNavbar/>
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-xl p-6 mb-8">
         <h2 className="text-2xl font-bold mb-2">Automated Trading</h2>
         <p className="text-sm mb-4">
@@ -123,14 +125,16 @@ export default function BotDashboard() {
 
               <div className="mt-4 flex flex-col sm:flex-row gap-2">
                 <button
-                  onClick={() => navigate(`/configure/${encodeURIComponent(bot.name)}`)}
+                  onClick={() =>
+                    navigate(`/configure/${encodeURIComponent(bot.name)}`)
+                  }
                   className="bg-gray-700 text-gray-300 px-3 py-2 rounded hover:bg-gray-600 transition flex-1"
                 >
                   Configure
                 </button>
-                                
 
                 <button
+                  onClick={() => navigate("/dcabot")}
                   className={`px-3 py-2 rounded flex-1 font-semibold transition ${
                     bot.status === "Configured"
                       ? "bg-green-400 text-gray-900 hover:bg-green-500"
