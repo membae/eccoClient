@@ -24,7 +24,9 @@ function App() {
       <Route path='/profile' element={<Profile/>}></Route>
       <Route path='/logout' element={<Logout/>}></Route>
       <Route path='/bot' element={<Bot/>}></Route>
-      <Route path='/configure' element={<Configure/>}></Route>
+      {/* <Route path='/configure' element={<Configure/>}></Route> */}
+      <Route path="/configure/:botName" element={<Configure />} ></Route>
+
 
     </Routes>
   )

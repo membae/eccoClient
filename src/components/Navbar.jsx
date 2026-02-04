@@ -19,7 +19,7 @@ export default function DashboardNavbar() {
     { name: "Markets", icon: FaChartLine, path: "/market" },
     { name: "Spot Trading", icon: FaBolt, path: "/dashboard" },
     { name: "Futures", icon: FaExchangeAlt, path: "/dashboard" },
-    { name: "Bots", icon: FaRobot, path: "/bots" },
+    { name: "Bots", icon: FaRobot, path: "/bot" },
     { name: "My Profile", icon: FaUser, path: "/profile" },
   ];
 
