@@ -12,6 +12,7 @@ import Logout from './components/Logout'
 import Bot from './components/Bot'
 import Configure from './components/Configure'
 import DcaBot from './components/DcaBot'
+import Edit from './components/Edit'
 function App() {
   return (
     <Routes>
@@ -28,6 +29,7 @@ function App() {
       {/* <Route path='/configure' element={<Configure/>}></Route> */}
       <Route path="/configure/:botName" element={<Configure />} ></Route>
       <Route path='/dcabot' element={<DcaBot/>}></Route>
+      <Route path='/edit' element={<Edit/>}></Route>
 
 
     </Routes>
