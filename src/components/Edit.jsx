@@ -2,7 +2,7 @@ import React from 'react'
 
 function Edit() {
   return (
-    <div>Admin adit page</div>
+    <div>Admin adit page.</div>
   )
 }
 
