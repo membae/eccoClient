@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import DashboardNavbar from "./Navbar";
 
 function GetUsers() {
   const [users, setUsers] = useState([]);
@@ -70,6 +71,7 @@ function GetUsers() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
+      <DashboardNavbar/>
       <h1 className="text-2xl font-bold mb-6">All Users</h1>
 
       <div className="overflow-x-auto">
