@@ -8,11 +8,14 @@ import {
   FaBars,
   FaExchangeAlt,
   FaUser,
+  FaUserEdit,
 } from "react-icons/fa";
 
 export default function DashboardNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+
+  const user = JSON.parse(localStorage.getItem("user")); // <-- logged in user
 
   const menuItems = [
     { name: "Dashboard", icon: FaHome, path: "/dashboard" },
@@ -23,13 +26,21 @@ export default function DashboardNavbar() {
     { name: "My Profile", icon: FaUser, path: "/profile" },
   ];
 
+  // <-- Only show for admin
+  if (user?.role === "admin") {
+    menuItems.push({
+      name: "Edit Users",
+      icon: FaUserEdit,
+      path: "/edit",
+    });
+  }
+
   const isActive = (path) => location.pathname === path;
 
   return (
     <>
       {/* Top Navbar */}
       <nav className="bg-gray-900 text-gray-300 px-6 py-3 flex items-center justify-between shadow-md fixed top-0 left-0 right-0 z-50">
-        {/* Logo */}
         <Link
           to="/dashboard"
           className="flex items-center gap-2 text-green-400 font-bold text-lg"
@@ -41,7 +52,7 @@ export default function DashboardNavbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <ul className="hidden md:flex gap-3">
+        <ul className="hidden md:flex gap-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -55,7 +66,7 @@ export default function DashboardNavbar() {
                   }`}
                 >
                   <Icon size={18} />
-                  <span>{item.name}</span>
+                  {item.name}
                 </Link>
               </li>
             );
@@ -73,7 +84,7 @@ export default function DashboardNavbar() {
 
       {/* Mobile Dropdown Menu */}
       {menuOpen && (
-        <div className="md:hidden fixed top-16 right-4 bg-gray-800 text-white rounded-xl shadow-lg z-50 p-3 flex flex-col gap-2 w-52">
+        <div className="md:hidden fixed top-16 right-4 bg-gray-800 text-white rounded-xl shadow-lg z-50 p-3 flex flex-col gap-2 w-56">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
