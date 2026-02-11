@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaChartLine,
@@ -14,8 +14,17 @@ import {
 export default function DashboardNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user")); // <-- logged in user
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Redirect to login if no user exists
+  useEffect(() => {
+    if (!user) {
+      navigate("/login", { replace: true });
+    }
+  }, [user, navigate]);
 
   const menuItems = [
     { name: "Dashboard", icon: FaHome, path: "/dashboard" },
@@ -26,7 +35,7 @@ export default function DashboardNavbar() {
     { name: "My Profile", icon: FaUser, path: "/profile" },
   ];
 
-  // <-- Only show for admin
+  // Only show "Edit Users" link for admin
   if (user?.role === "admin") {
     menuItems.push({
       name: "Edit Users",
