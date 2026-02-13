@@ -16,6 +16,8 @@ import Edit from './components/Edit'
 import Chatbot from './components/Chatbot'
 function App() {
   return (
+    <>
+    <Chatbot/>
     <Routes>
       <Route path='/' element={<Home/>}></Route>
       <Route path="/auth" element={<Auth />} />
@@ -31,10 +33,11 @@ function App() {
       <Route path="/configure/:botName" element={<Configure />} ></Route>
       <Route path='/dcabot' element={<DcaBot/>}></Route>
       <Route path='/edit' element={<Edit/>}></Route>
-      <Route path='/chatbot' element={<Chatbot/>}></Route>
+      
 
 
     </Routes>
+    </>
   )
 }
 
