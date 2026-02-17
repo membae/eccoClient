@@ -1,11 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  FaHome,
-  FaChartLine,
-  FaBolt,
-  FaRobot,
-  FaUser,
-} from "react-icons/fa";
 import DashboardNavbar from "./Navbar";
 
 export default function BotRunning() {
@@ -47,18 +40,36 @@ export default function BotRunning() {
 
   const startBot = () => {
     if (intervalRef.current) return;
+    setRunning(true);
 
     intervalRef.current = setInterval(() => {
-      const gain = +(Math.random() * 1).toFixed(2);
-      const winFluctuation = (Math.random() * 2 - 1).toFixed(1);
+      const winProbability = 0.7;
+      const isWin = Math.random() < winProbability;
 
-      setBotAmount((a) => +(a + gain).toFixed(2));
+      let pnl;
+
+      if (isWin) {
+        // PROFIT: +$0.20 → +$1.00
+        pnl = +(Math.random() * 0.8 + 0.2).toFixed(2);
+      } else {
+        // LOSS: -$0.05 → -$0.30
+        pnl = -+(Math.random() * 0.25 + 0.05).toFixed(2);
+      }
+
+      setBotAmount((prev) => +(prev + pnl).toFixed(2));
       setTrades((t) => t + 1);
+
+      // Small dynamic realism adjustment
       setWinRate((w) =>
-        Math.min(95, Math.max(50, +(w + +winFluctuation).toFixed(1)))
+        Math.min(90, Math.max(60, +(w + (isWin ? 0.2 : -0.5)).toFixed(1)))
       );
 
-      addLog(`📈 Trade executed → +$${gain}`);
+      addLog({
+        message: isWin
+          ? `📈 Trade WIN → +$${pnl}`
+          : `📉 Trade LOSS → -$${Math.abs(pnl)}`,
+        type: isWin ? "win" : "loss",
+      });
     }, 3000);
   };
 
@@ -66,7 +77,7 @@ export default function BotRunning() {
     clearInterval(intervalRef.current);
     intervalRef.current = null;
     setRunning(false);
-    addLog("⏸ Bot paused");
+    addLog({ message: "⏸ Bot paused", type: "info" });
   };
 
   const stopBot = async () => {
@@ -76,7 +87,6 @@ export default function BotRunning() {
     setLoading(true);
 
     try {
-      // Update user balance in backend
       const res = await fetch(
         `http://127.0.0.1:5000/users/${user.id}/balance`,
         {
@@ -87,34 +97,35 @@ export default function BotRunning() {
       );
 
       if (!res.ok) throw new Error("Failed to update balance");
-      const updatedBalance = await res.json();
 
-      // Update user in localStorage
+      const updatedBalance = await res.json();
       const updatedUser = { ...user, balance: updatedBalance };
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      // Remove bot config from localStorage
       const updatedBotConfigs = { ...botConfigs };
       delete updatedBotConfigs[botName];
       localStorage.setItem("botConfigs", JSON.stringify(updatedBotConfigs));
 
-      // Reset bot state
+      addLog({ message: "🛑 Bot stopped", type: "info" });
+      addLog({
+        message: `💰 Wallet credited: $${botAmount.toFixed(2)}`,
+        type: "win",
+      });
+
       setBotAmount(0);
       setTrades(0);
       setWinRate(70);
-      addLog("🛑 Bot stopped");
-      addLog(`💰 $${configuredAmount} credited to wallet`);
     } catch (err) {
       console.error(err);
-      addLog("❌ Failed to update wallet balance");
+      addLog({ message: "❌ Failed to update wallet balance", type: "loss" });
     } finally {
       setLoading(false);
     }
   };
 
-  const addLog = (message) => {
+  const addLog = ({ message, type }) => {
     setLogs((prev) => [
-      { time: new Date().toLocaleTimeString(), message },
+      { time: new Date().toLocaleTimeString(), message, type },
       ...prev,
     ]);
   };
@@ -143,7 +154,7 @@ export default function BotRunning() {
         <button
           onClick={startBot}
           disabled={running || loading}
-          className="flex-1 bg-gray-700 py-2 rounded opacity-50 disabled:opacity-50"
+          className="flex-1 bg-gray-700 py-2 rounded disabled:opacity-50"
         >
           Start Bot
         </button>
@@ -179,10 +190,22 @@ export default function BotRunning() {
 
       {/* LOGS */}
       <div className="flex-1 px-4 mt-4 mb-20">
-        <h3 className="text-sm text-gray-400 mb-2">Bot Logs ({logs.length})</h3>
-        <div className="bg-black rounded-lg p-3 space-y-2 text-xs text-green-400 max-h-60 overflow-y-auto">
+        <h3 className="text-sm text-gray-400 mb-2">
+          Bot Logs ({logs.length})
+        </h3>
+
+        <div className="bg-black rounded-lg p-3 space-y-2 text-xs max-h-60 overflow-y-auto">
           {logs.map((log, i) => (
-            <p key={i}>
+            <p
+              key={i}
+              className={`rounded px-2 py-1 ${
+                log.type === "win"
+                  ? "text-green-400 bg-green-900/10"
+                  : log.type === "loss"
+                  ? "text-red-400 bg-red-900/30"
+                  : "text-gray-400 bg-gray-800/20"
+              }`}
+            >
               [{log.time}] {log.message}
             </p>
           ))}
@@ -192,7 +215,7 @@ export default function BotRunning() {
   );
 }
 
-/* ---------- COMPONENTS ---------- */
+/* ---------- COMPONENT ---------- */
 function StatCard({ label, value, accent }) {
   const accents = {
     green: "border-green-500",
