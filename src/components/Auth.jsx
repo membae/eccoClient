@@ -1,14 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AuthForm() {
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("login");
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [openDropdown, setOpenDropdown] = useState(false);
 
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [loginForm, setLoginForm] = useState({
+    email: "",
+    password: "",
+  });
+
   const [signupForm, setSignupForm] = useState({
     fullName: "",
     email: "",
@@ -20,21 +26,22 @@ export default function AuthForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  /* ---------------- Fetch Countries ---------------- */
+  /* ---------------- FETCH COUNTRIES ---------------- */
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         const res = await fetch(
-          "https://restcountries.com/v3.1/all?fields=name,idd,flag"
+          "https://restcountries.com/v3.1/all?fields=name,idd,flags"
         );
         const data = await res.json();
+
         const formatted = data
           .map((c) => {
             if (!c.idd?.root || !c.idd?.suffixes) return null;
             return {
               name: c.name.common,
               code: c.idd.root + c.idd.suffixes[0],
-              flag: c.flag,
+              flag: c.flags.png,
             };
           })
           .filter(Boolean)
@@ -46,21 +53,44 @@ export default function AuthForm() {
         );
       } catch {
         const fallback = [
-          { name: "Kenya", code: "+254", flag: "🇰🇪" },
-          { name: "United States", code: "+1", flag: "🇺🇸" },
-          { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
+          {
+            name: "Kenya",
+            code: "+254",
+            flag: "https://flagcdn.com/w20/ke.png",
+          },
+          {
+            name: "United States",
+            code: "+1",
+            flag: "https://flagcdn.com/w20/us.png",
+          },
+          {
+            name: "United Kingdom",
+            code: "+44",
+            flag: "https://flagcdn.com/w20/gb.png",
+          },
         ];
         setCountries(fallback);
         setSelectedCountry(fallback[0]);
       }
     };
+
     fetchCountries();
   }, []);
 
-  /* ---------------- Handlers ---------------- */
-  const handleLoginChange = (e) => {
+  /* ---------------- CLOSE DROPDOWN ON OUTSIDE CLICK ---------------- */
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ---------------- HANDLERS ---------------- */
+  const handleLoginChange = (e) =>
     setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
-  };
 
   const handleSignupChange = (e) => {
     setSignupForm({ ...signupForm, [e.target.name]: e.target.value });
@@ -88,16 +118,12 @@ export default function AuthForm() {
         return;
       }
 
-      // ✅ Store user data and token
       localStorage.setItem("user", JSON.stringify(data.user));
       if (data.token) localStorage.setItem("token", data.token);
 
       setSuccess("Login successful!");
-
-      // ✅ Redirect to dashboard
       setTimeout(() => navigate("/dashboard"), 500);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Network error. Try again later.");
     }
   };
@@ -143,10 +169,8 @@ export default function AuthForm() {
         password: "",
         confirmPassword: "",
       });
-
       setActiveTab("login");
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Network error. Try again later.");
     }
   };
@@ -185,7 +209,7 @@ export default function AuthForm() {
         {error && <p className="text-red-500 text-center">{error}</p>}
         {success && <p className="text-green-500 text-center">{success}</p>}
 
-        {/* LOGIN FORM */}
+        {/* LOGIN */}
         {activeTab === "login" && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <input
@@ -210,7 +234,7 @@ export default function AuthForm() {
           </form>
         )}
 
-        {/* SIGNUP FORM */}
+        {/* SIGNUP */}
         {activeTab === "signup" && (
           <form onSubmit={handleSignupSubmit} className="space-y-4">
             <input
@@ -228,22 +252,45 @@ export default function AuthForm() {
               onChange={handleSignupChange}
               className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
             />
-            <div className="flex gap-2">
-              <select
-                value={selectedCountry?.code || ""}
-                onChange={(e) =>
-                  setSelectedCountry(
-                    countries.find((c) => c.code === e.target.value)
-                  )
-                }
-                className="w-32 px-3 py-3 rounded-lg bg-gray-800 text-white"
+
+            {/* COUNTRY PICKER */}
+            <div className="flex gap-2 relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setOpenDropdown(!openDropdown)}
+                className="w-32 flex items-center gap-2 px-3 py-3 rounded-lg bg-gray-800 text-white"
               >
-                {countries.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.code}
-                  </option>
-                ))}
-              </select>
+                {selectedCountry && (
+                  <>
+                    <img
+                      src={selectedCountry.flag}
+                      alt={selectedCountry.name}
+                      className="w-5 h-4 rounded"
+                    />
+                    <span>{selectedCountry.code}</span>
+                  </>
+                )}
+              </button>
+
+              {openDropdown && (
+                <div className="absolute top-14 left-0 w-64 max-h-60 overflow-y-auto bg-gray-900 rounded-lg shadow-lg z-20">
+                  {countries.map((c) => (
+                    <div
+                      key={c.code}
+                      onClick={() => {
+                        setSelectedCountry(c);
+                        setOpenDropdown(false);
+                      }}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-700 cursor-pointer text-white"
+                    >
+                      <img src={c.flag} className="w-5 h-4 rounded" />
+                      <span className="flex-1 text-sm">{c.name}</span>
+                      <span className="text-gray-400 text-sm">{c.code}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <input
                 name="phone"
                 placeholder="Phone Number"
@@ -252,6 +299,7 @@ export default function AuthForm() {
                 className="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white"
               />
             </div>
+
             <input
               name="password"
               type="password"
@@ -268,6 +316,7 @@ export default function AuthForm() {
               onChange={handleSignupChange}
               className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg"
             />
+
             <button className="w-full bg-green-500 py-3 rounded-lg text-white">
               Sign Up
             </button>
