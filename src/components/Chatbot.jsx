@@ -5,9 +5,15 @@ export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(1);
 
+  const TELEGRAM_LINK = "https://t.me/@PMMemba"; // replace with yours
+
   const openChat = () => {
     setOpen(true);
     setUnread(0);
+  };
+
+  const goToTelegram = () => {
+    window.open(TELEGRAM_LINK, "_blank");
   };
 
   return (
@@ -18,7 +24,6 @@ export default function ChatBot() {
         className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-600 transition"
       >
         <MessageCircle size={26} />
-
         {unread > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center">
             {unread}
@@ -39,11 +44,15 @@ export default function ChatBot() {
 
           {/* Body */}
           <div className="p-4 space-y-3">
-            <button className="w-full border border-green-500 text-green-600 rounded-full py-2 hover:bg-green-50">
-              I have a question
-            </button>
-            <button className="w-full border border-green-500 text-green-600 rounded-full py-2 hover:bg-green-50">
-              Tell me more
+            <p className="text-sm text-gray-600 text-center">
+              For instant help, continue on Telegram
+            </p>
+
+            <button
+              onClick={goToTelegram}
+              className="w-full bg-green-500 text-white rounded-full py-2 hover:bg-green-600 transition"
+            >
+              Chat on Telegram
             </button>
           </div>
         </div>
