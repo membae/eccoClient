@@ -5,7 +5,7 @@ export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(1);
 
-  const TELEGRAM_LINK = "https://t.me/@PMMemba"; // replace with yours
+  const TELEGRAM_LINK = "https://t.me/@PMemba"; // replace with yours
 
   const openChat = () => {
     setOpen(true);
