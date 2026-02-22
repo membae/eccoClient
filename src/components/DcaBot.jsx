@@ -4,19 +4,20 @@ import DashboardNavbar from "./Navbar";
 export default function BotRunning() {
   const botName = "Bitcoin Accumulation";
 
-  /* ---------- LOCAL STORAGE ---------- */
-  const user =
-    JSON.parse(localStorage.getItem("user")) || {
-      id: null,
-      balance: { balance: 0 },
-    };
+  /* ---------- SAFE LOCAL STORAGE READ ---------- */
+  const storedUser = JSON.parse(localStorage.getItem("user"));
 
-  const botConfigs =
-    JSON.parse(localStorage.getItem("botConfigs")) || {
-      "Bitcoin Accumulation": { amount: 100 },
-    };
+  const user = storedUser
+    ? {
+        ...storedUser,
+        balance: {
+          balance: Number(storedUser?.balance?.balance ?? 0),
+        },
+      }
+    : { id: null, balance: { balance: 0 } };
 
-  const configuredAmount = botConfigs[botName]?.amount || 0;
+  const storedConfigs = JSON.parse(localStorage.getItem("botConfigs")) || {};
+  const configuredAmount = Number(storedConfigs[botName]?.amount ?? 0);
 
   /* ---------- STATE ---------- */
   const [botAmount, setBotAmount] = useState(configuredAmount);
@@ -36,30 +37,27 @@ export default function BotRunning() {
   useEffect(() => {
     startBot();
     return () => clearInterval(intervalRef.current);
+    // eslint-disable-next-line
   }, []);
 
   const startBot = () => {
     if (intervalRef.current) return;
+
     setRunning(true);
 
     intervalRef.current = setInterval(() => {
-      const winProbability = 0.7;
-      const isWin = Math.random() < winProbability;
-
+      const isWin = Math.random() < 0.7;
       let pnl;
 
       if (isWin) {
-        // PROFIT: +$0.20 → +$1.00
         pnl = +(Math.random() * 0.8 + 0.2).toFixed(2);
       } else {
-        // LOSS: -$0.05 → -$0.30
         pnl = -+(Math.random() * 0.25 + 0.05).toFixed(2);
       }
 
       setBotAmount((prev) => +(prev + pnl).toFixed(2));
       setTrades((t) => t + 1);
 
-      // Small dynamic realism adjustment
       setWinRate((w) =>
         Math.min(90, Math.max(60, +(w + (isWin ? 0.2 : -0.5)).toFixed(1)))
       );
@@ -98,17 +96,33 @@ export default function BotRunning() {
 
       if (!res.ok) throw new Error("Failed to update balance");
 
-      const updatedBalance = await res.json();
-      const updatedUser = { ...user, balance: updatedBalance };
+      const response = await res.json();
+
+      /* ---------- NORMALIZE BACKEND RESPONSE ---------- */
+      const numericBalance = Number(
+        response?.balance?.balance ??
+          response?.balance ??
+          botAmount ??
+          0
+      );
+
+      const updatedUser = {
+        ...user,
+        balance: {
+          balance: numericBalance,
+        },
+      };
+
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      const updatedBotConfigs = { ...botConfigs };
-      delete updatedBotConfigs[botName];
-      localStorage.setItem("botConfigs", JSON.stringify(updatedBotConfigs));
+      /* ---------- REMOVE BOT CONFIG ---------- */
+      const updatedConfigs = { ...storedConfigs };
+      delete updatedConfigs[botName];
+      localStorage.setItem("botConfigs", JSON.stringify(updatedConfigs));
 
       addLog({ message: "🛑 Bot stopped", type: "info" });
       addLog({
-        message: `💰 Wallet credited: $${botAmount.toFixed(2)}`,
+        message: `💰 Wallet credited: $${numericBalance.toFixed(2)}`,
         type: "win",
       });
 
@@ -117,7 +131,10 @@ export default function BotRunning() {
       setWinRate(70);
     } catch (err) {
       console.error(err);
-      addLog({ message: "❌ Failed to update wallet balance", type: "loss" });
+      addLog({
+        message: "❌ Failed to update wallet balance",
+        type: "loss",
+      });
     } finally {
       setLoading(false);
     }
@@ -137,7 +154,9 @@ export default function BotRunning() {
       {/* HEADER */}
       <div className="p-4 border-b border-gray-800">
         <h1 className="text-lg font-semibold">{botName} Bot</h1>
-        <p className="text-xs text-gray-400">Bot ID: dca-1 • Account: Real</p>
+        <p className="text-xs text-gray-400">
+          Bot ID: dca-1 • Account: Real
+        </p>
       </div>
 
       {/* STATUS */}
@@ -161,7 +180,7 @@ export default function BotRunning() {
 
         <button
           onClick={pauseBot}
-          disabled={loading || !running}
+          disabled={!running || loading}
           className="flex-1 bg-yellow-500 text-black py-2 rounded font-semibold"
         >
           Pause Bot
@@ -215,7 +234,7 @@ export default function BotRunning() {
   );
 }
 
-/* ---------- COMPONENT ---------- */
+/* ---------- STAT CARD ---------- */
 function StatCard({ label, value, accent }) {
   const accents = {
     green: "border-green-500",
