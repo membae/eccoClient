@@ -62,11 +62,20 @@ export default function BotRunning() {
         Math.min(90, Math.max(60, +(w + (isWin ? 0.2 : -0.5)).toFixed(1)))
       );
 
+      /* ---------- BINANCE STYLE LOG ---------- */
+      const btcPrice = (44850 + Math.random() * 300).toFixed(1);
+      const side = Math.random() > 0.5 ? "BUY" : "SELL";
+      const size = (Math.random() * 0.005 + 0.001).toFixed(4);
+
       addLog({
-        message: isWin
-          ? `📈 Trade WIN → +$${pnl}`
-          : `📉 Trade LOSS → -$${Math.abs(pnl)}`,
-        type: isWin ? "win" : "loss",
+        message: {
+          symbol: "BTCUSDT",
+          side,
+          price: btcPrice,
+          size,
+          pnl,
+        },
+        type: pnl >= 0 ? "win" : "loss",
       });
     }, 3000);
   };
@@ -75,7 +84,7 @@ export default function BotRunning() {
     clearInterval(intervalRef.current);
     intervalRef.current = null;
     setRunning(false);
-    addLog({ message: "⏸ Bot paused", type: "info" });
+    addLog({ message: "Bot paused", type: "info" });
   };
 
   const stopBot = async () => {
@@ -98,7 +107,6 @@ export default function BotRunning() {
 
       const response = await res.json();
 
-      /* ---------- NORMALIZE BACKEND RESPONSE ---------- */
       const numericBalance = Number(
         response?.balance?.balance ??
           response?.balance ??
@@ -115,14 +123,13 @@ export default function BotRunning() {
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      /* ---------- REMOVE BOT CONFIG ---------- */
       const updatedConfigs = { ...storedConfigs };
       delete updatedConfigs[botName];
       localStorage.setItem("botConfigs", JSON.stringify(updatedConfigs));
 
-      addLog({ message: "🛑 Bot stopped", type: "info" });
+      addLog({ message: "Bot stopped", type: "info" });
       addLog({
-        message: `💰 Wallet credited: $${numericBalance.toFixed(2)}`,
+        message: `Wallet credited: $${numericBalance.toFixed(2)}`,
         type: "win",
       });
 
@@ -132,7 +139,7 @@ export default function BotRunning() {
     } catch (err) {
       console.error(err);
       addLog({
-        message: "❌ Failed to update wallet balance",
+        message: "Failed to update wallet balance",
         type: "loss",
       });
     } finally {
@@ -151,7 +158,6 @@ export default function BotRunning() {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <DashboardNavbar />
 
-      {/* HEADER */}
       <div className="p-4 border-b border-gray-800">
         <h1 className="text-lg font-semibold">{botName} Bot</h1>
         <p className="text-xs text-gray-400">
@@ -159,7 +165,6 @@ export default function BotRunning() {
         </p>
       </div>
 
-      {/* STATUS */}
       <div
         className={`text-center py-2 font-semibold ${
           running ? "bg-green-500 text-black" : "bg-red-600"
@@ -168,7 +173,6 @@ export default function BotRunning() {
         {running ? "Running" : "Stopped"}
       </div>
 
-      {/* CONTROLS */}
       <div className="flex gap-3 p-4">
         <button
           onClick={startBot}
@@ -195,7 +199,6 @@ export default function BotRunning() {
         </button>
       </div>
 
-      {/* STATS */}
       <div className="grid grid-cols-2 gap-4 px-4">
         <StatCard label="Bot Balance" value={`$${botAmount}`} accent="green" />
         <StatCard
@@ -207,27 +210,63 @@ export default function BotRunning() {
         <StatCard label="Win Rate" value={`${winRate}%`} accent="yellow" />
       </div>
 
-      {/* LOGS */}
+      {/* BINANCE TERMINAL LOGS */}
       <div className="flex-1 px-4 mt-4 mb-20">
         <h3 className="text-sm text-gray-400 mb-2">
           Bot Logs ({logs.length})
         </h3>
 
-        <div className="bg-black rounded-lg p-3 space-y-2 text-xs max-h-60 overflow-y-auto">
-          {logs.map((log, i) => (
-            <p
-              key={i}
-              className={`rounded px-2 py-1 ${
-                log.type === "win"
-                  ? "text-green-400 bg-green-900/10"
-                  : log.type === "loss"
-                  ? "text-red-400 bg-red-900/30"
-                  : "text-gray-400 bg-gray-800/20"
-              }`}
-            >
-              [{log.time}] {log.message}
-            </p>
-          ))}
+        <div className="bg-black rounded-lg p-3 space-y-2 text-xs max-h-60 overflow-y-auto font-mono">
+          {logs.map((log, i) => {
+            if (typeof log.message === "string") {
+              return (
+                <p
+                  key={i}
+                  className="text-gray-400 bg-gray-800/20 rounded px-2 py-1"
+                >
+                  [{log.time}] {log.message}
+                </p>
+              );
+            }
+
+            const { symbol, side, price, size, pnl } = log.message;
+
+            return (
+              <div
+                key={i}
+                className="bg-black border-b border-gray-800 px-3 py-2"
+              >
+                <div className="flex justify-between">
+                  <span className="text-gray-500">[{log.time}]</span>
+                  <span
+                    className={
+                      side === "BUY" ? "text-green-400" : "text-red-400"
+                    }
+                  >
+                    {side}
+                  </span>
+                </div>
+
+                <div className="flex justify-between mt-1">
+                  <span className="text-yellow-400">{symbol}</span>
+                  <span className="text-gray-400">
+                    {size} @ {price}
+                  </span>
+                </div>
+
+                <div className="mt-1">
+                  <span
+                    className={
+                      pnl >= 0 ? "text-green-400 font-semibold" : "text-red-400 font-semibold"
+                    }
+                  >
+                    P/L: {pnl >= 0 ? "+" : "-"}$
+                    {Math.abs(pnl)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
