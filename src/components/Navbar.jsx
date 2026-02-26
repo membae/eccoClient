@@ -19,32 +19,54 @@ export default function DashboardNavbar() {
   // Get user from localStorage
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Redirect to login if no user exists
+  // Redirect if not logged in
   useEffect(() => {
     if (!user) {
       navigate("/login", { replace: true });
     }
   }, [user, navigate]);
 
+  // Navigation items with unique keys
   const menuItems = [
-    { name: "Dashboard", icon: FaHome, path: "/dashboard" },
-    { name: "Markets", icon: FaChartLine, path: "/market" },
-    { name: "Spot Trading", icon: FaBolt, path: "/dashboard" },
-    { name: "Futures", icon: FaExchangeAlt, path: "/dashboard" },
-    { name: "Bots", icon: FaRobot, path: "/bot" },
-    { name: "My Profile", icon: FaUser, path: "/profile" },
+    { name: "Dashboard", icon: FaHome, path: "/dashboard", key: "dashboard" },
+    { name: "Markets", icon: FaChartLine, path: "/market", key: "markets" },
+    {
+      name: "Spot Trading",
+      icon: FaBolt,
+      path: "/dashboard?tab=spot",
+      key: "spot",
+    },
+    {
+      name: "Futures",
+      icon: FaExchangeAlt,
+      path: "/dashboard?tab=futures",
+      key: "futures",
+    },
+    { name: "Bots", icon: FaRobot, path: "/bot", key: "bots" },
+    { name: "My Profile", icon: FaUser, path: "/profile", key: "profile" },
   ];
 
-  // Only show "Edit Users" link for admin
+  // Show Edit Users only for admin
   if (user?.role === "admin") {
     menuItems.push({
       name: "Edit Users",
       icon: FaUserEdit,
       path: "/edit",
+      key: "edit",
     });
   }
 
-  const isActive = (path) => location.pathname === path;
+  // Active logic
+  const isActive = (key) => {
+    const params = new URLSearchParams(location.search);
+    const currentTab = params.get("tab");
+
+    if (location.pathname === "/dashboard") {
+      return key === (currentTab || "dashboard");
+    }
+
+    return location.pathname.includes(key);
+  };
 
   return (
     <>
@@ -65,11 +87,11 @@ export default function DashboardNavbar() {
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <li key={item.name}>
+              <li key={item.key}>
                 <Link
                   to={item.path}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                    isActive(item.path)
+                    isActive(item.key)
                       ? "bg-green-500 text-black font-semibold"
                       : "hover:bg-gray-700 hover:text-white"
                   }`}
@@ -91,18 +113,18 @@ export default function DashboardNavbar() {
         </button>
       </nav>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden fixed top-16 right-4 bg-gray-800 text-white rounded-xl shadow-lg z-50 p-3 flex flex-col gap-2 w-56">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
-                key={item.name}
+                key={item.key}
                 to={item.path}
                 onClick={() => setMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${
-                  isActive(item.path)
+                  isActive(item.key)
                     ? "bg-green-500 text-black font-semibold"
                     : "hover:bg-gray-700"
                 }`}
@@ -121,10 +143,10 @@ export default function DashboardNavbar() {
           const Icon = item.icon;
           return (
             <Link
-              key={item.name}
+              key={item.key}
               to={item.path}
               className={`flex flex-col items-center gap-1 text-xs transition ${
-                isActive(item.path)
+                isActive(item.key)
                   ? "text-green-400"
                   : "hover:text-white"
               }`}
