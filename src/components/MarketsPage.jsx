@@ -3,51 +3,44 @@ import MarketChart from './MarketChart';
 import DashboardNavbar from './Navbar';
 
 const MarketsPage = () => {
-  const [selectedCoin, setSelectedCoin] = useState('bitcoin');
-  const [selectedCurrency, setSelectedCurrency] = useState('usd');
+  const [selectedCoin, setSelectedCoin] = useState('BTCUSDT');
 
   const coins = [
-    { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC' },
-    { id: 'ethereum', name: 'Ethereum', symbol: 'ETH' },
-    { id: 'solana', name: 'Solana', symbol: 'SOL' },
-    { id: 'cardano', name: 'Cardano', symbol: 'ADA' },
-    { id: 'ripple', name: 'Ripple', symbol: 'XRP' },
+    { id: 'BTCUSDT', name: 'Bitcoin', symbol: 'BTC' },
+    { id: 'ETHUSDT', name: 'Ethereum', symbol: 'ETH' },
+    { id: 'SOLUSDT', name: 'Solana', symbol: 'SOL' },
+    { id: 'ADAUSDT', name: 'Cardano', symbol: 'ADA' },
+    { id: 'XRPUSDT', name: 'Ripple', symbol: 'XRP' },
   ];
 
-  const currencies = ['usd', 'eur', 'gbp', 'jpy'];
-
   return (
-    <div className="p-6">
-      <DashboardNavbar />
+    <div className="flex flex-col h-screen">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <h1 className="text-3xl font-bold mb-2">Market Charts</h1>
+        <p className="text-gray-400 mb-6">Real-time cryptocurrency market data</p>
 
-      <h1 className="text-3xl font-bold mb-2">Market Charts</h1>
-      <p className="text-gray-400 mb-6">Real-time cryptocurrency market data</p>
+        {/* Coin Selector */}
+        <div className="mb-6">
+          <select
+            value={selectedCoin}
+            onChange={(e) => setSelectedCoin(e.target.value)}
+            className="bg-gray-700 px-4 py-2 rounded"
+          >
+            {coins.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div className="flex gap-4 mb-6">
-        <select
-          value={selectedCoin}
-          onChange={(e) => setSelectedCoin(e.target.value)}
-          className="bg-gray-700 px-4 py-2 rounded"
-        >
-          {coins.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.name} ({c.symbol})
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selectedCurrency}
-          onChange={(e) => setSelectedCurrency(e.target.value)}
-          className="bg-gray-700 px-4 py-2 rounded"
-        >
-          {currencies.map(c => (
-            <option key={c} value={c}>{c.toUpperCase()}</option>
-          ))}
-        </select>
+        {/* Chart */}
+        <MarketChart coinSymbol={selectedCoin} />
       </div>
 
-      <MarketChart coinId={selectedCoin} currency={selectedCurrency} />
+      {/* Fixed Bottom Navbar */}
+      <DashboardNavbar className="fixed bottom-0 left-0 w-full z-50" />
     </div>
   );
 };
