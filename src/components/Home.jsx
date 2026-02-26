@@ -74,7 +74,8 @@ export default function Home() {
       </section>
 
       {/* HERO */}
-      <section className="text-center py-24 px-6 bg-slate-950">
+      <section className="text-center py-24 px-6 bg-slate-950" >
+        <img src="/eco background.jpeg" alt="back"/>
         <h2 className="text-5xl font-bold mb-6">Grow Your Wealth Faster</h2>
         <p className="text-gray-400 max-w-3xl mx-auto mb-10">
           Our platform uses AI-driven trading tech to maximize your return on
