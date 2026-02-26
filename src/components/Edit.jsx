@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import DashboardNavbar from "./Navbar";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function GetUsers() {
   const [users, setUsers] = useState([]);
@@ -9,7 +10,7 @@ function GetUsers() {
 
   // FETCH USERS
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/users")
+    fetch(`${API_URL}/users`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch users");
         return res.json();
@@ -29,7 +30,7 @@ function GetUsers() {
     const value = Number(amount[id]);
     if (!value) return alert("Enter a valid amount");
 
-    fetch(`http://127.0.0.1:5000/users/${id}/balance`, {
+    fetch(`${API_URL}/users/${id}/balance`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amount: value }),

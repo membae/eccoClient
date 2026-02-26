@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AuthForm() {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ export default function AuthForm() {
     setSuccess("");
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginForm),
@@ -148,7 +149,7 @@ export default function AuthForm() {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/signup", {
+      const res = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
