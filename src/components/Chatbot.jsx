@@ -4,6 +4,8 @@ import { MessageCircle, X } from "lucide-react";
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(1);
+  const [messages, setMessages] = useState([]); // {sender: 'bot'|'user', text: string}
+  const [input, setInput] = useState("");
 
   const TELEGRAM_LINK = "https://t.me/+-fHV5Ev0oTc5ODFk"; // replace with yours
 
@@ -14,6 +16,31 @@ export default function ChatBot() {
 
   const goToTelegram = () => {
     window.open(TELEGRAM_LINK, "_blank");
+  };
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+
+    const userMsg = { sender: "user", text: input };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+
+    // Bot response
+    let botResponse = "Hi, how can I help you?";
+    if (input.toLowerCase().includes("hi") || input.toLowerCase().includes("hello")) {
+      botResponse = "Hi, how can I help you?";
+    } else {
+      botResponse =
+        "Thanks for your message! You can reach out to us on Telegram for further help.";
+    }
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, { sender: "bot", text: botResponse }]);
+    }, 500);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") sendMessage();
   };
 
   return (
@@ -33,7 +60,7 @@ export default function ChatBot() {
 
       {/* Chat Box */}
       {open && (
-        <div className="fixed bottom-24 right-6 w-72 bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-green-500 text-white px-4 py-3 flex justify-between items-center">
             <span className="font-semibold">Support Bot</span>
@@ -43,18 +70,48 @@ export default function ChatBot() {
           </div>
 
           {/* Body */}
-          <div className="p-4 space-y-3">
-            <p className="text-sm text-gray-600 text-center">
-              For instant help, continue on Telegram
-            </p>
+          <div className="flex-1 p-4 overflow-y-auto space-y-2" style={{ maxHeight: "300px" }}>
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`${
+                  msg.sender === "bot" ? "bg-gray-200 text-gray-800 self-start" : "bg-green-500 text-white self-end"
+                } px-3 py-2 rounded-xl max-w-[70%]`}
+              >
+                {msg.text}
+              </div>
+            ))}
+          </div>
 
+          {/* Input */}
+          <div className="p-4 flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type a message..."
+              className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
             <button
-              onClick={goToTelegram}
-              className="w-full bg-green-500 text-white rounded-full py-2 hover:bg-green-600 transition"
+              onClick={sendMessage}
+              className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition"
             >
-              Chat on Telegram
+              Send
             </button>
           </div>
+
+          {/* Telegram Button if bot suggested */}
+          {messages.some(msg => msg.sender === "bot" && msg.text.includes("Telegram")) && (
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={goToTelegram}
+                className="w-full bg-green-500 text-white rounded-full py-2 hover:bg-green-600 transition"
+              >
+                Chat on Telegram
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>
