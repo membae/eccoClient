@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import DashboardNavbar from "./Navbar";
+import { FaBitcoin, FaEthereum, FaCreditCard } from "react-icons/fa";
+import { SiTether } from "react-icons/si";
+import { MdCurrencyBitcoin } from "react-icons/md";
 
 function Deposit() {
   const [amount, setAmount] = useState(49);
@@ -12,6 +15,27 @@ function Deposit() {
     ethereum: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
   };
 
+  const cryptoOptions = [
+    {
+      id: "bitcoin",
+      name: "Bitcoin",
+      icon: <FaBitcoin size={28} />,
+      color: "#F7931A", // official Bitcoin orange
+    },
+    {
+      id: "usdt",
+      name: "USDT",
+      icon: <SiTether size={28} />,
+      color: "#26A17B", // Tether green
+    },
+    {
+      id: "ethereum",
+      name: "Ethereum",
+      icon: <FaEthereum size={28} />,
+      color: "#3C3C3D", // Ethereum dark gray
+    },
+  ];
+
   const copyAddress = () => {
     navigator.clipboard.writeText(walletAddresses[selectedCrypto]);
     alert("Wallet address copied!");
@@ -19,8 +43,8 @@ function Deposit() {
 
   return (
     <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white">
-        <DashboardNavbar/>
-      {/* Header */}
+      <DashboardNavbar />
+
       <h2 className="text-xl font-semibold">Fund Your Account</h2>
       <p className="text-sm text-blue-200 mt-1">
         Choose your preferred deposit method below
@@ -30,23 +54,26 @@ function Deposit() {
       <div className="flex gap-3 mt-5">
         <button
           onClick={() => setMethod("crypto")}
-          className={`flex-1 py-2 rounded-lg font-medium transition ${
+          className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
             method === "crypto"
               ? "bg-blue-600"
               : "bg-blue-800 hover:bg-blue-700"
           }`}
         >
-          💰 Crypto
+          <MdCurrencyBitcoin size={20} />
+          Crypto
         </button>
+
         <button
           onClick={() => setMethod("card")}
-          className={`flex-1 py-2 rounded-lg font-medium transition ${
+          className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
             method === "card"
               ? "bg-blue-600"
               : "bg-blue-800 hover:bg-blue-700"
           }`}
         >
-          💳 Card
+          <FaCreditCard size={18} />
+          Card
         </button>
       </div>
 
@@ -55,11 +82,7 @@ function Deposit() {
         <>
           {/* Crypto Options */}
           <div className="grid grid-cols-3 gap-3 mt-6">
-            {[
-              { id: "bitcoin", icon: "₿", name: "Bitcoin" },
-              { id: "usdt", icon: "₮", name: "USDT" },
-              { id: "ethereum", icon: "Ξ", name: "Ethereum" },
-            ].map((crypto) => (
+            {cryptoOptions.map((crypto) => (
               <div
                 key={crypto.id}
                 onClick={() => setSelectedCrypto(crypto.id)}
@@ -69,7 +92,12 @@ function Deposit() {
                     : "border-blue-700 hover:border-blue-400"
                 }`}
               >
-                <div className="text-3xl mb-1">{crypto.icon}</div>
+                <div
+                  className="flex justify-center mb-2"
+                  style={{ color: crypto.color }}
+                >
+                  {crypto.icon}
+                </div>
                 <div className="text-sm font-medium">{crypto.name}</div>
               </div>
             ))}
@@ -166,7 +194,8 @@ function Deposit() {
             />
           </div>
 
-          <button className="w-full mt-4 py-3 bg-blue-600 rounded-lg font-semibold hover:bg-blue-500 transition">
+          <button className="w-full mt-4 py-3 bg-blue-600 rounded-lg font-semibold hover:bg-blue-500 transition flex items-center justify-center gap-2">
+            <FaCreditCard />
             Pay Now
           </button>
         </div>

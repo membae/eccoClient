@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import DashboardNavbar from "./Navbar";
+import { FaBitcoin, FaEthereum } from "react-icons/fa";
+import { SiTether } from "react-icons/si";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 function Withdraw() {
@@ -10,7 +13,6 @@ function Withdraw() {
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
-
   const [user, setUser] = useState(null);
 
   // Fetch user balance from localStorage
@@ -29,18 +31,19 @@ function Withdraw() {
     ethereum: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
   };
 
+  const cryptoOptions = [
+    { id: "bitcoin", name: "Bitcoin", icon: <FaBitcoin size={28} />, color: "#F7931A" },
+    { id: "usdt", name: "USDT", icon: <SiTether size={28} />, color: "#26A17B" },
+    { id: "ethereum", name: "Ethereum", icon: <FaEthereum size={28} />, color: "#3C3C3D" },
+  ];
+
   const handleAmountChange = (value) => {
     setAmount(value);
 
-    if (availableBalance < 50) {
-      setError("Minimum balance of $50 required to withdraw.");
-    } else if (value <= 0) {
-      setError("Enter a valid withdrawal amount.");
-    } else if (value > availableBalance) {
-      setError("Insufficient balance for this withdrawal.");
-    } else {
-      setError("");
-    }
+    if (availableBalance < 50) setError("Minimum balance of $50 required to withdraw.");
+    else if (value <= 0) setError("Enter a valid withdrawal amount.");
+    else if (value > availableBalance) setError("Insufficient balance for this withdrawal.");
+    else setError("");
   };
 
   const isDisabled =
@@ -54,21 +57,14 @@ function Withdraw() {
     setSuccess(false);
 
     try {
-      // Send negative amount to backend for withdrawal
-      const res = await fetch(
-        `${API_URL}/users/${user.id}/balance`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ amount: (-amount).toString() }),
-        }
-      );
+      const res = await fetch(`${API_URL}/users/${user.id}/balance`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: (-amount).toString() }),
+      });
 
       if (!res.ok) throw new Error("Withdrawal failed.");
 
-      // Update balance locally
       const newBalance = availableBalance - amount;
       setAvailableBalance(newBalance);
       const updatedUser = { ...user, balance: { ...user.balance, balance: newBalance } };
@@ -117,9 +113,7 @@ function Withdraw() {
             key={m.id}
             onClick={() => setMethod(m.id)}
             className={`flex-1 py-2 rounded-lg font-medium transition ${
-              method === m.id
-                ? "bg-blue-600"
-                : "bg-blue-800 hover:bg-blue-700"
+              method === m.id ? "bg-blue-600" : "bg-blue-800 hover:bg-blue-700"
             }`}
           >
             {m.label}
@@ -127,39 +121,45 @@ function Withdraw() {
         ))}
       </div>
 
-      {/* Amount Input */}
-      <div className="mt-6">
-        <label className="text-sm text-blue-200">Amount (USD)</label>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => handleAmountChange(Number(e.target.value))}
-          className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
-          disabled={processing}
-        />
-        {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
-        {success && <p className="text-sm text-green-400 mt-1">Withdrawal Successful!</p>}
-      </div>
-
-      {/* Method-specific fields */}
+      {/* Crypto Method */}
       {method === "crypto" && (
         <div className="mt-5 grid grid-cols-3 gap-3">
-          {["bitcoin", "usdt", "ethereum"].map((crypto) => (
+          {cryptoOptions.map((crypto) => (
             <div
-              key={crypto}
-              onClick={() => setSelectedCrypto(crypto)}
+              key={crypto.id}
+              onClick={() => setSelectedCrypto(crypto.id)}
               className={`cursor-pointer rounded-xl p-4 text-center border transition ${
-                selectedCrypto === crypto
-                  ? "border-blue-400 bg-blue-800"
+                selectedCrypto === crypto.id
+                  ? `border-${crypto.color} bg-blue-800`
                   : "border-blue-700 hover:border-blue-400"
               }`}
             >
-              <div className="text-3xl mb-1">
-                {crypto === "bitcoin" ? "₿" : crypto === "usdt" ? "₮" : "Ξ"}
+              <div className="mb-1" style={{ color: crypto.color }}>
+                {crypto.icon}
               </div>
-              <div className="text-sm font-medium">{crypto.toUpperCase()}</div>
+              <div className="text-sm font-medium" style={{ color: crypto.color }}>
+                {crypto.name}
+              </div>
             </div>
           ))}
+
+          {/* Amount Input */}
+          <div className="col-span-3 mt-4">
+            <label className="text-sm text-blue-200">Amount (USD)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => handleAmountChange(Number(e.target.value))}
+              className="w-full mt-1 px-4 py-2 rounded-lg bg-blue-800 border border-blue-700"
+              disabled={processing}
+            />
+            {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
+            {success && (
+              <p className="text-sm text-green-400 mt-1">
+                Withdrawal Successful!
+              </p>
+            )}
+          </div>
 
           {/* Wallet Address */}
           <div className="col-span-3 mt-4">
@@ -173,6 +173,7 @@ function Withdraw() {
         </div>
       )}
 
+      {/* Bank Method */}
       {method === "bank" && (
         <div className="mt-4 space-y-3">
           <input
@@ -202,6 +203,7 @@ function Withdraw() {
         </div>
       )}
 
+      {/* M-Pesa Method */}
       {method === "mpesa" && (
         <div className="mt-4">
           <input
@@ -218,9 +220,7 @@ function Withdraw() {
         onClick={handleWithdraw}
         disabled={isDisabled}
         className={`w-full mt-6 py-3 rounded-lg font-semibold transition ${
-          isDisabled
-            ? "bg-gray-600 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-500"
+          isDisabled ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
         }`}
       >
         {processing ? (
