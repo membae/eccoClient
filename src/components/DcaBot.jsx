@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import DashboardNavbar from "./Navbar";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function BotRunning() {
   const botName = "Bitcoin Accumulation";
@@ -95,7 +96,7 @@ export default function BotRunning() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/users/${user.id}/balance`,
+        `${API_URL}/users/${user.id}/balance`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

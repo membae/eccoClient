@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Configure() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function Configure() {
     try {
       // 1️⃣ Update balance via PATCH
       const response = await fetch(
-        `http://localhost:5000/users/${user.id}/balance`,
+        `${API_URL}/users/${user.id}/balance`,
         {
           method: "PATCH",
           headers: {
