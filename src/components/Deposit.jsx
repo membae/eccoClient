@@ -10,9 +10,9 @@ function Deposit() {
   const [selectedCrypto, setSelectedCrypto] = useState("bitcoin");
 
   const walletAddresses = {
-    bitcoin: "18ra7tQNP5hBo8JJ3LPbPr36o4zgNc1i5h",
-    usdt: "TQp9XK6GZ8kUSDTexampleAddress123",
-    ethereum: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    bitcoin: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs",
+    usdt: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs", // ✅ Updated
+    ethereum: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs",
   };
 
   const cryptoOptions = [
@@ -20,19 +20,19 @@ function Deposit() {
       id: "bitcoin",
       name: "Bitcoin",
       icon: <FaBitcoin size={28} />,
-      color: "#F7931A", // official Bitcoin orange
+      color: "#F7931A",
     },
     {
       id: "usdt",
       name: "USDT",
       icon: <SiTether size={28} />,
-      color: "#26A17B", // Tether green
+      color: "#26A17B",
     },
     {
       id: "ethereum",
       name: "Ethereum",
       icon: <FaEthereum size={28} />,
-      color: "#3C3C3D", // Ethereum dark gray
+      color: "#3C3C3D",
     },
   ];
 
@@ -45,7 +45,7 @@ function Deposit() {
     <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white">
       <DashboardNavbar />
 
-      <h2 className="text-xl font-semibold">Fund Your Account</h2>
+      <h2 className="text-xl font-semibold mt-4">Fund Your Account</h2>
       <p className="text-sm text-blue-200 mt-1">
         Choose your preferred deposit method below
       </p>
@@ -122,17 +122,19 @@ function Deposit() {
               Wallet Address
             </label>
 
-            <div className="flex gap-2 mt-2">
-              <input
+            <div className="flex flex-col gap-3 mt-2">
+              <textarea
                 readOnly
                 value={walletAddresses[selectedCrypto]}
-                className="flex-1 px-3 py-2 rounded-lg bg-black text-white text-sm"
+                rows={3}
+                className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-all resize-none"
               />
+
               <button
                 onClick={copyAddress}
-                className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition"
+                className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition"
               >
-                Copy
+                Copy Address
               </button>
             </div>
 
