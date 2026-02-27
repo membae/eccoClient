@@ -42,7 +42,7 @@ function Deposit() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white">
+    <div className="max-w-md mx-auto bg-blue-900 p-6 rounded-xl shadow-lg text-white min-h-screen pb-24 overflow-y-auto">
       <DashboardNavbar />
 
       <h2 className="text-xl font-semibold mt-4">Fund Your Account</h2>
