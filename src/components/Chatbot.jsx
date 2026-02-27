@@ -4,10 +4,10 @@ import { MessageCircle, X } from "lucide-react";
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(1);
-  const [messages, setMessages] = useState([]); // {sender: 'bot'|'user', text: string}
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
-  const TELEGRAM_LINK = "https://t.me/+-fHV5Ev0oTc5ODFk"; // replace with yours
+  const TELEGRAM_LINK = "https://t.me/+-fHV5Ev0oTc5ODFk";
 
   const openChat = () => {
     setOpen(true);
@@ -22,12 +22,14 @@ export default function ChatBot() {
     if (!input.trim()) return;
 
     const userMsg = { sender: "user", text: input };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    // Bot response
     let botResponse = "Hi, how can I help you?";
-    if (input.toLowerCase().includes("hi") || input.toLowerCase().includes("hello")) {
+    if (
+      input.toLowerCase().includes("hi") ||
+      input.toLowerCase().includes("hello")
+    ) {
       botResponse = "Hi, how can I help you?";
     } else {
       botResponse =
@@ -35,7 +37,7 @@ export default function ChatBot() {
     }
 
     setTimeout(() => {
-      setMessages(prev => [...prev, { sender: "bot", text: botResponse }]);
+      setMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
     }, 500);
   };
 
@@ -48,7 +50,7 @@ export default function ChatBot() {
       {/* Floating Button */}
       <button
         onClick={openChat}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-600 transition"
+        className="fixed right-4 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-[9999] w-14 h-14 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-600 transition"
       >
         <MessageCircle size={26} />
         {unread > 0 && (
@@ -60,7 +62,7 @@ export default function ChatBot() {
 
       {/* Chat Box */}
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed right-2 sm:right-6 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[9999] max-w-full sm:w-80 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-green-500 text-white px-4 py-3 flex justify-between items-center">
             <span className="font-semibold">Support Bot</span>
@@ -70,12 +72,17 @@ export default function ChatBot() {
           </div>
 
           {/* Body */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-2" style={{ maxHeight: "300px" }}>
+          <div
+            className="flex-1 p-4 overflow-y-auto space-y-2"
+            style={{ maxHeight: "300px" }}
+          >
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`${
-                  msg.sender === "bot" ? "bg-gray-200 text-gray-800 self-start" : "bg-green-500 text-white self-end"
+                  msg.sender === "bot"
+                    ? "bg-gray-200 text-gray-800 self-start"
+                    : "bg-green-500 text-white self-end"
                 } px-3 py-2 rounded-xl max-w-[70%]`}
               >
                 {msg.text}
@@ -101,8 +108,10 @@ export default function ChatBot() {
             </button>
           </div>
 
-          {/* Telegram Button if bot suggested */}
-          {messages.some(msg => msg.sender === "bot" && msg.text.includes("Telegram")) && (
+          {/* Telegram Button */}
+          {messages.some(
+            (msg) => msg.sender === "bot" && msg.text.includes("Telegram")
+          ) && (
             <div className="p-4 border-t border-gray-200">
               <button
                 onClick={goToTelegram}
