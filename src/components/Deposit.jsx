@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DashboardNavbar from "./Navbar";
 import { FaBitcoin, FaEthereum, FaCreditCard } from "react-icons/fa";
 import { SiTether } from "react-icons/si";
 import { MdCurrencyBitcoin } from "react-icons/md";
 
 function Deposit() {
-  const API_URL = import.meta.env.VITE_API_URL; // use .env variable
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [amount, setAmount] = useState(49);
   const [method, setMethod] = useState("crypto");
   const [selectedCrypto, setSelectedCrypto] = useState("bitcoin");
   const [walletAddress, setWalletAddress] = useState("");
   const [user, setUser] = useState(null);
+  const walletRef = useRef(null);
 
   // Fetch logged in user from localStorage
   useEffect(() => {
@@ -28,6 +29,14 @@ function Deposit() {
       })
       .catch((err) => console.error("Error fetching wallet:", err));
   }, [API_URL]);
+
+  // Auto-resize textarea when walletAddress changes
+  useEffect(() => {
+    if (walletRef.current) {
+      walletRef.current.style.height = "auto"; // reset height
+      walletRef.current.style.height = walletRef.current.scrollHeight + "px"; // set to content height
+    }
+  }, [walletAddress]);
 
   const cryptoOptions = [
     { id: "bitcoin", name: "Bitcoin", icon: <FaBitcoin size={28} />, color: "#F7931A" },
@@ -125,14 +134,13 @@ function Deposit() {
             </label>
 
             <div className="flex flex-col gap-3 mt-2">
-              {/* Editable for admin */}
               {user?.role === "admin" ? (
                 <>
-                  <input
-                    type="text"
+                  <textarea
+                    ref={walletRef}
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-black text-white text-sm break-all"
+                    className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-words resize-none overflow-hidden"
                   />
                   <button
                     onClick={updateWallet}
@@ -143,10 +151,10 @@ function Deposit() {
                 </>
               ) : (
                 <textarea
+                  ref={walletRef}
                   readOnly
                   value={walletAddress || "Loading wallet..."}
-                  rows={3}
-                  className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-all resize-none"
+                  className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-words resize-none overflow-hidden"
                 />
               )}
 
