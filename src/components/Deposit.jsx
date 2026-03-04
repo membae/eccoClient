@@ -1,44 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardNavbar from "./Navbar";
 import { FaBitcoin, FaEthereum, FaCreditCard } from "react-icons/fa";
 import { SiTether } from "react-icons/si";
 import { MdCurrencyBitcoin } from "react-icons/md";
 
 function Deposit() {
+  const API_URL = import.meta.env.VITE_API_URL; // use .env variable
+
   const [amount, setAmount] = useState(49);
   const [method, setMethod] = useState("crypto");
   const [selectedCrypto, setSelectedCrypto] = useState("bitcoin");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [user, setUser] = useState(null);
 
-  const walletAddresses = {
-    bitcoin: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs",
-    usdt: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs", // ✅ Updated
-    ethereum: "THFucayUDaikpRTEfrYK2GdvduZ5GRXAZs",
-  };
+  // Fetch logged in user from localStorage
+  useEffect(() => {
+    const loggedUser = JSON.parse(localStorage.getItem("user"));
+    if (loggedUser) setUser(loggedUser);
+  }, []);
+
+  // Fetch wallet from backend
+  useEffect(() => {
+    fetch(`${API_URL}/wallet/1`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.wallet) setWalletAddress(data.wallet);
+      })
+      .catch((err) => console.error("Error fetching wallet:", err));
+  }, [API_URL]);
 
   const cryptoOptions = [
-    {
-      id: "bitcoin",
-      name: "Bitcoin",
-      icon: <FaBitcoin size={28} />,
-      color: "#F7931A",
-    },
-    {
-      id: "usdt",
-      name: "USDT",
-      icon: <SiTether size={28} />,
-      color: "#26A17B",
-    },
-    {
-      id: "ethereum",
-      name: "Ethereum",
-      icon: <FaEthereum size={28} />,
-      color: "#3C3C3D",
-    },
+    { id: "bitcoin", name: "Bitcoin", icon: <FaBitcoin size={28} />, color: "#F7931A" },
+    { id: "usdt", name: "USDT", icon: <SiTether size={28} />, color: "#26A17B" },
+    { id: "ethereum", name: "Ethereum", icon: <FaEthereum size={28} />, color: "#3C3C3D" },
   ];
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(walletAddresses[selectedCrypto]);
+    navigator.clipboard.writeText(walletAddress);
     alert("Wallet address copied!");
+  };
+
+  const updateWallet = () => {
+    fetch(`${API_URL}/wallet/1`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet: walletAddress }),
+    })
+      .then((res) => res.json())
+      .then(() => alert("Wallet updated successfully!"))
+      .catch((err) => {
+        console.error("Error updating wallet:", err);
+        alert("Failed to update wallet.");
+      });
   };
 
   return (
@@ -55,25 +68,19 @@ function Deposit() {
         <button
           onClick={() => setMethod("crypto")}
           className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-            method === "crypto"
-              ? "bg-blue-600"
-              : "bg-blue-800 hover:bg-blue-700"
+            method === "crypto" ? "bg-blue-600" : "bg-blue-800 hover:bg-blue-700"
           }`}
         >
-          <MdCurrencyBitcoin size={20} />
-          Crypto
+          <MdCurrencyBitcoin size={20} /> Crypto
         </button>
 
         <button
           onClick={() => setMethod("card")}
           className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-            method === "card"
-              ? "bg-blue-600"
-              : "bg-blue-800 hover:bg-blue-700"
+            method === "card" ? "bg-blue-600" : "bg-blue-800 hover:bg-blue-700"
           }`}
         >
-          <FaCreditCard size={18} />
-          Card
+          <FaCreditCard size={18} /> Card
         </button>
       </div>
 
@@ -92,10 +99,7 @@ function Deposit() {
                     : "border-blue-700 hover:border-blue-400"
                 }`}
               >
-                <div
-                  className="flex justify-center mb-2"
-                  style={{ color: crypto.color }}
-                >
+                <div className="flex justify-center mb-2" style={{ color: crypto.color }}>
                   {crypto.icon}
                 </div>
                 <div className="text-sm font-medium">{crypto.name}</div>
@@ -117,18 +121,34 @@ function Deposit() {
           {/* Wallet Box */}
           <div className="mt-6 bg-blue-800 p-4 rounded-xl">
             <label className="text-sm text-blue-200">
-              {selectedCrypto.charAt(0).toUpperCase() +
-                selectedCrypto.slice(1)}{" "}
-              Wallet Address
+              {selectedCrypto.charAt(0).toUpperCase() + selectedCrypto.slice(1)} Wallet Address
             </label>
 
             <div className="flex flex-col gap-3 mt-2">
-              <textarea
-                readOnly
-                value={walletAddresses[selectedCrypto]}
-                rows={3}
-                className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-all resize-none"
-              />
+              {/* Editable for admin */}
+              {user?.role === "admin" ? (
+                <>
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-black text-white text-sm break-all"
+                  />
+                  <button
+                    onClick={updateWallet}
+                    className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition"
+                  >
+                    Save Wallet
+                  </button>
+                </>
+              ) : (
+                <textarea
+                  readOnly
+                  value={walletAddress || "Loading wallet..."}
+                  rows={3}
+                  className="w-full px-3 py-3 rounded-lg bg-black text-white text-sm break-all resize-none"
+                />
+              )}
 
               <button
                 onClick={copyAddress}
@@ -139,8 +159,7 @@ function Deposit() {
             </div>
 
             <p className="text-xs text-blue-200 mt-3">
-              Send the exact amount to this address and your account will be
-              credited automatically.
+              Send the exact amount to this address and your account will be credited automatically.
             </p>
           </div>
         </>
