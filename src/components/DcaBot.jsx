@@ -27,11 +27,12 @@ export default function BotRunning() {
   const [logs, setLogs] = useState([]);
   const [running, setRunning] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [profit, setProfit] = useState(0); // ✅ Track profit separately
 
   const intervalRef = useRef(null);
 
   /* ---------- DERIVED ---------- */
-  const totalPL = +(botAmount - configuredAmount).toFixed(2);
+  const totalPL = +profit.toFixed(2); // ✅ P/L now only shows profit/loss
   const isProfit = totalPL >= 0;
 
   /* ---------- BOT ENGINE ---------- */
@@ -58,6 +59,9 @@ export default function BotRunning() {
 
       setBotAmount((prev) => +(prev + pnl).toFixed(2));
       setTrades((t) => t + 1);
+
+      // ✅ Update profit separately
+      setProfit((prev) => +(prev + pnl).toFixed(2));
 
       setWinRate((w) =>
         Math.min(90, Math.max(60, +(w + (isWin ? 0.2 : -0.5)).toFixed(1)))
@@ -134,9 +138,7 @@ export default function BotRunning() {
         type: "win",
       });
 
-      setBotAmount(0);
-      setTrades(0);
-      setWinRate(70);
+      // ✅ Stats no longer reset, so they stay visible
     } catch (err) {
       console.error(err);
       addLog({
@@ -240,9 +242,7 @@ export default function BotRunning() {
                 <div className="flex justify-between">
                   <span className="text-gray-500">[{log.time}]</span>
                   <span
-                    className={
-                      side === "BUY" ? "text-green-400" : "text-red-400"
-                    }
+                    className={side === "BUY" ? "text-green-400" : "text-red-400"}
                   >
                     {side}
                   </span>
@@ -258,11 +258,12 @@ export default function BotRunning() {
                 <div className="mt-1">
                   <span
                     className={
-                      pnl >= 0 ? "text-green-400 font-semibold" : "text-red-400 font-semibold"
+                      pnl >= 0
+                        ? "text-green-400 font-semibold"
+                        : "text-red-400 font-semibold"
                     }
                   >
-                    P/L: {pnl >= 0 ? "+" : "-"}$
-                    {Math.abs(pnl)}
+                    P/L: {pnl >= 0 ? "+" : "-"}${Math.abs(pnl)}
                   </span>
                 </div>
               </div>
