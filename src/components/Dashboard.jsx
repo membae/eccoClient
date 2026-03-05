@@ -24,10 +24,8 @@ function Dashboard() {
   /* ================= LOAD BALANCE ================= */
   const loadBalance = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (user.balance && typeof user.balance.balance === "number") {
-      setBalance(user.balance.balance);
-    }
+    const numericBalance = Number(user.balance?.balance ?? 0);
+    setBalance(numericBalance);
   };
 
   /* ================= INITIAL LOAD ================= */
@@ -35,9 +33,11 @@ function Dashboard() {
     loadBalance();
     refreshAll();
 
-    // Listen for localStorage updates
-    const handleStorageChange = () => {
-      loadBalance();
+    // Listen for balance updates from admin (localStorage change)
+    const handleStorageChange = (e) => {
+      if (e.key === "user") {
+        loadBalance();
+      }
     };
 
     window.addEventListener("storage", handleStorageChange);
@@ -107,7 +107,6 @@ function Dashboard() {
 
       {/* ================= BOTTOM SECTION ================= */}
       <div className="flex flex-col lg:flex-row gap-4">
-
         {/* ========== WATCHLIST ========== */}
         <div className="w-full lg:w-1/3 bg-white rounded-2xl p-5">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
@@ -205,7 +204,7 @@ function Dashboard() {
                   </p>
                   <p className="text-sm text-gray-600">Amount: {amount}</p>
                   <p className="font-semibold text-gray-900">
-                    Value: ${value.toLocaleString()}
+                    Value: ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </p>
 
                   <button className="mt-3 flex items-center gap-2 bg-green-500 px-4 py-2 rounded-lg font-semibold hover:bg-green-400">

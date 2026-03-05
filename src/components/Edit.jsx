@@ -25,54 +25,62 @@ function GetUsers() {
       });
   }, []);
 
-  // PATCH BALANCE ONLY
+  // PATCH BALANCE
   const updateBalance = (id) => {
-    const value = Number(amount[id]);
-    if (!value) return alert("Enter a valid amount");
+  const value = Number(amount[id]);
+  if (isNaN(value)) return alert("Enter a valid number");
 
-    fetch(`${API_URL}/users/${id}/balance`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: value }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === id
-              ? {
-                  ...u,
-                  balance: {
-                    ...u.balance,
-                    balance: data.balance,
-                  },
-                }
-              : u
-          )
+  fetch(`${API_URL}/users/${id}/balance`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount: value }), // server now sets exact new balance
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === id
+            ? { ...u, balance: { ...u.balance, balance: data.balance } }
+            : u
+        )
+      );
+
+      // Update localStorage for logged-in user if affected
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (currentUser.id === id) {
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ ...currentUser, balance: { balance: data.balance } })
         );
-        setAmount({ ...amount, [id]: "" });
-      });
-  };
+        // Trigger Dashboard update
+        window.dispatchEvent(new Event("storage"));
+      }
 
-  if (loading) {
+      setAmount({ ...amount, [id]: "" });
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Failed to update balance");
+    });
+};
+
+  if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         Loading users...
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400">
         {error}
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <DashboardNavbar/>
+      <DashboardNavbar />
       <h1 className="text-2xl font-bold mb-6">All Users</h1>
 
       <div className="overflow-x-auto">
@@ -99,27 +107,17 @@ function GetUsers() {
                 <td className="p-3">{user.email}</td>
                 <td className="p-3">{user.phone_number}</td>
                 <td className="p-3">{user.country}</td>
-
-                {/* VIEW ONLY ROLE */}
-                <td className="p-3 capitalize text-gray-300">
-                  {user.role}
-                </td>
-
+                <td className="p-3 capitalize text-gray-300">{user.role}</td>
                 <td className="p-3 text-green-400">
                   {user.balance?.balance ?? 0}
                 </td>
-
-                {/* BALANCE PATCH */}
                 <td className="p-3 flex gap-2">
                   <input
                     type="number"
                     placeholder="+ / - amount"
                     value={amount[user.id] || ""}
                     onChange={(e) =>
-                      setAmount({
-                        ...amount,
-                        [user.id]: e.target.value,
-                      })
+                      setAmount({ ...amount, [user.id]: e.target.value })
                     }
                     className="w-24 bg-gray-700 p-1 rounded"
                   />
