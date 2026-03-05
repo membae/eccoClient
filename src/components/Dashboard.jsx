@@ -21,13 +21,30 @@ function Dashboard() {
 
   const navigate = useNavigate();
 
-  /* ================= BALANCE (UNCHANGED) ================= */
-  useEffect(() => {
+  /* ================= LOAD BALANCE ================= */
+  const loadBalance = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+
     if (user.balance && typeof user.balance.balance === "number") {
       setBalance(user.balance.balance);
     }
+  };
+
+  /* ================= INITIAL LOAD ================= */
+  useEffect(() => {
+    loadBalance();
     refreshAll();
+
+    // Listen for localStorage updates
+    const handleStorageChange = () => {
+      loadBalance();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   /* ================= FETCH PRICES ================= */
@@ -90,6 +107,7 @@ function Dashboard() {
 
       {/* ================= BOTTOM SECTION ================= */}
       <div className="flex flex-col lg:flex-row gap-4">
+
         {/* ========== WATCHLIST ========== */}
         <div className="w-full lg:w-1/3 bg-white rounded-2xl p-5">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
@@ -185,9 +203,7 @@ function Dashboard() {
                   <p className="font-semibold text-gray-900">
                     ${coin.current_price.toLocaleString()}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    Amount: {amount}
-                  </p>
+                  <p className="text-sm text-gray-600">Amount: {amount}</p>
                   <p className="font-semibold text-gray-900">
                     Value: ${value.toLocaleString()}
                   </p>
