@@ -34,9 +34,11 @@ export default function BotDashboard() {
       ...bot,
       status: savedConfigs[bot.name] ? "Configured" : "Not Configured",
       amount: savedConfigs[bot.name]?.amount || null,
+      isConfigured: !!savedConfigs[bot.name], // flag to disable configure button
     }));
 
     setBots(updatedBots);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -85,13 +87,6 @@ export default function BotDashboard() {
           Regular purchases of assets regardless of price
         </p>
 
-        <button
-          onClick={() => navigate("/configure")}
-          className="bg-green-400 text-gray-900 font-semibold px-4 py-2 rounded mb-4 hover:bg-green-500 transition"
-        >
-          Create DCA Bot
-        </button>
-
         <div className="grid gap-6 md:grid-cols-2">
           {bots.map((bot) => (
             <div
@@ -113,7 +108,7 @@ export default function BotDashboard() {
                       <strong>Risk:</strong> {bot.risk}
                     </span>
                     <span>
-                      <strong>Performance:</strong> --
+                      <strong>Performance:</strong> -- 
                     </span>
                   </div>
                 </div>
@@ -124,15 +119,20 @@ export default function BotDashboard() {
               </div>
 
               <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                {/* Configure Button */}
                 <button
                   onClick={() =>
                     navigate(`/configure/${encodeURIComponent(bot.name)}`)
                   }
-                  className="bg-gray-700 text-gray-300 px-3 py-2 rounded hover:bg-gray-600 transition flex-1"
+                  disabled={bot.isConfigured} // disable if already configured
+                  className={`bg-gray-700 text-gray-300 px-3 py-2 rounded hover:bg-gray-600 transition flex-1 ${
+                    bot.isConfigured ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  Configure
+                  {bot.isConfigured ? "Configured" : "Configure"}
                 </button>
 
+                {/* Start Bot Button */}
                 <button
                   onClick={() => navigate("/dcabot")}
                   className={`px-3 py-2 rounded flex-1 font-semibold transition ${
