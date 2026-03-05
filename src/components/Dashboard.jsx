@@ -3,6 +3,7 @@ import { FaExchangeAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "./Navbar";
 
+const API_URL = import.meta.env.VITE_API_URL;
 const WATCHLIST = ["bitcoin", "ethereum", "usd-coin"];
 const YOUR_CRYPTO = ["bitcoin", "ethereum", "binancecoin", "solana"];
 
@@ -22,32 +23,32 @@ function Dashboard() {
   const navigate = useNavigate();
 
   /* ================= LOAD BALANCE ================= */
-  const loadBalance = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const numericBalance = Number(user.balance?.balance ?? 0);
-    setBalance(numericBalance);
+  const loadBalance = async () => {
+    try {
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!localUser.id) return;
+
+      const res = await fetch(`${API_URL}/users/${localUser.id}/balance`);
+      if (!res.ok) throw new Error(`Failed to fetch user balance: ${res.status}`);
+      const data = await res.json();
+
+      setBalance(Number(data.balance ?? 0));
+
+      // Update localStorage so other tabs/components have latest user data
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...localUser, balance: { balance: Number(data.balance) } })
+      );
+    } catch (err) {
+      console.error("Failed to load balance:", err);
+
+      // fallback to localStorage if backend fails
+      const fallback = JSON.parse(localStorage.getItem("user") || "{}");
+      setBalance(Number(fallback.balance?.balance ?? 0));
+    }
   };
 
-  /* ================= INITIAL LOAD ================= */
-  useEffect(() => {
-    loadBalance();
-    refreshAll();
-
-    // Listen for balance updates from admin (localStorage change)
-    const handleStorageChange = (e) => {
-      if (e.key === "user") {
-        loadBalance();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  /* ================= FETCH PRICES ================= */
+  /* ================= FETCH COIN PRICES ================= */
   const fetchPrices = async (coins, setter) => {
     try {
       const res = await fetch(
@@ -68,8 +69,23 @@ function Dashboard() {
   const refreshAll = async () => {
     await fetchPrices(WATCHLIST, setWatchlist);
     await fetchPrices(YOUR_CRYPTO, setPortfolio);
+    await loadBalance();
     setLastUpdated(new Date().toLocaleString());
   };
+
+  /* ================= INITIAL LOAD ================= */
+  useEffect(() => {
+    refreshAll();
+
+    const handleStorageChange = (e) => {
+      if (e.key === "user") {
+        loadBalance();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 p-4 flex flex-col gap-4">
