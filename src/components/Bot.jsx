@@ -68,7 +68,7 @@ export default function BotDashboard() {
         </div>
 
         <button
-          onClick={() => navigate("/configure")}
+          // onClick={() => navigate("/configure")}
           className="bg-white text-blue-600 font-semibold px-4 py-2 rounded hover:bg-gray-200 transition"
         >
           Create New Bot →
