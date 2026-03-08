@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import DashboardNavbar from "./Navbar";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function BotRunning() {
-  const botName = "Bitcoin Accumulation";
 
-  /* ---------- SAFE LOCAL STORAGE READ ---------- */
+  const location = useLocation();
+  const botName = location.state?.botName || "Unknown Bot";
+
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
   const user = storedUser
@@ -20,35 +23,36 @@ export default function BotRunning() {
   const storedConfigs = JSON.parse(localStorage.getItem("botConfigs")) || {};
   const configuredAmount = Number(storedConfigs[botName]?.amount ?? 0);
 
-  /* ---------- STATE ---------- */
   const [botAmount, setBotAmount] = useState(configuredAmount);
   const [trades, setTrades] = useState(0);
   const [winRate, setWinRate] = useState(70);
   const [logs, setLogs] = useState([]);
   const [running, setRunning] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [profit, setProfit] = useState(0); // ✅ Track profit separately
+  const [profit, setProfit] = useState(0);
 
   const intervalRef = useRef(null);
 
-  /* ---------- DERIVED ---------- */
-  const totalPL = +profit.toFixed(2); // ✅ P/L now only shows profit/loss
+  const totalPL = +profit.toFixed(2);
   const isProfit = totalPL >= 0;
 
-  /* ---------- BOT ENGINE ---------- */
+  /* BOT START */
+
   useEffect(() => {
     startBot();
     return () => clearInterval(intervalRef.current);
-    // eslint-disable-next-line
   }, []);
 
   const startBot = () => {
+
     if (intervalRef.current) return;
 
     setRunning(true);
 
     intervalRef.current = setInterval(() => {
+
       const isWin = Math.random() < 0.7;
+
       let pnl;
 
       if (isWin) {
@@ -59,54 +63,54 @@ export default function BotRunning() {
 
       setBotAmount((prev) => +(prev + pnl).toFixed(2));
       setTrades((t) => t + 1);
-
-      // ✅ Update profit separately
       setProfit((prev) => +(prev + pnl).toFixed(2));
 
       setWinRate((w) =>
         Math.min(90, Math.max(60, +(w + (isWin ? 0.2 : -0.5)).toFixed(1)))
       );
 
-      /* ---------- BINANCE STYLE LOG ---------- */
       const btcPrice = (44850 + Math.random() * 300).toFixed(1);
       const side = Math.random() > 0.5 ? "BUY" : "SELL";
       const size = (Math.random() * 0.005 + 0.001).toFixed(4);
 
       addLog({
-        message: {
-          symbol: "BTCUSDT",
-          side,
-          price: btcPrice,
-          size,
-          pnl,
-        },
-        type: pnl >= 0 ? "win" : "loss",
+        symbol: "BTCUSDT",
+        side,
+        price: btcPrice,
+        size,
+        pnl,
       });
+
     }, 3000);
   };
 
   const pauseBot = () => {
+
     clearInterval(intervalRef.current);
     intervalRef.current = null;
+
     setRunning(false);
-    addLog({ message: "Bot paused", type: "info" });
+
+    addSystemLog("Bot paused");
   };
 
   const stopBot = async () => {
+
     clearInterval(intervalRef.current);
     intervalRef.current = null;
+
     setRunning(false);
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${API_URL}/users/${user.id}/balance`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: +botAmount.toFixed(2) }),
-        }
-      );
+
+      const res = await fetch(`${API_URL}/users/${user.id}/balance`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: +botAmount.toFixed(2),
+        }),
+      });
 
       if (!res.ok) throw new Error("Failed to update balance");
 
@@ -130,42 +134,61 @@ export default function BotRunning() {
 
       const updatedConfigs = { ...storedConfigs };
       delete updatedConfigs[botName];
+
       localStorage.setItem("botConfigs", JSON.stringify(updatedConfigs));
 
-      addLog({ message: "Bot stopped", type: "info" });
-      addLog({
-        message: `Wallet credited: $${numericBalance.toFixed(2)}`,
-        type: "win",
-      });
+      addSystemLog("Bot stopped");
+      addSystemLog(`Wallet credited: $${numericBalance.toFixed(2)}`);
 
-      // ✅ Stats no longer reset, so they stay visible
     } catch (err) {
+
       console.error(err);
-      addLog({
-        message: "Failed to update wallet balance",
-        type: "loss",
-      });
+
+      addSystemLog("Failed to update wallet balance");
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  const addLog = ({ message, type }) => {
+  const addLog = ({ symbol, side, price, size, pnl }) => {
+
     setLogs((prev) => [
-      { time: new Date().toLocaleTimeString(), message, type },
+      {
+        type: "trade",
+        time: new Date().toLocaleTimeString(),
+        symbol,
+        side,
+        price,
+        size,
+        pnl,
+      },
+      ...prev,
+    ]);
+  };
+
+  const addSystemLog = (message) => {
+
+    setLogs((prev) => [
+      {
+        type: "system",
+        time: new Date().toLocaleTimeString(),
+        message,
+      },
       ...prev,
     ]);
   };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+
       <DashboardNavbar />
 
       <div className="p-4 border-b border-gray-800">
         <h1 className="text-lg font-semibold">{botName} Bot</h1>
-        <p className="text-xs text-gray-400">
-          Bot ID: dca-1 • Account: Real
-        </p>
+        <p className="text-xs text-gray-400">Bot ID: dca-1 • Account: Real</p>
       </div>
 
       <div
@@ -177,6 +200,7 @@ export default function BotRunning() {
       </div>
 
       <div className="flex gap-3 p-4">
+
         <button
           onClick={startBot}
           disabled={running || loading}
@@ -200,83 +224,94 @@ export default function BotRunning() {
         >
           {loading ? "Stopping..." : "Stop Bot"}
         </button>
+
       </div>
 
       <div className="grid grid-cols-2 gap-4 px-4">
+
         <StatCard label="Bot Balance" value={`$${botAmount}`} accent="green" />
+
         <StatCard
           label="Total P/L"
           value={`${isProfit ? "+" : "-"}$${Math.abs(totalPL)}`}
           accent={isProfit ? "green" : "red"}
         />
+
         <StatCard label="Total Trades" value={trades} accent="purple" />
+
         <StatCard label="Win Rate" value={`${winRate}%`} accent="yellow" />
+
       </div>
 
-      {/* BINANCE TERMINAL LOGS */}
-      <div className="flex-1 px-4 mt-4 mb-20">
+      {/* LOGS */}
+
+      <div className="px-4 mt-4 mb-20">
+
         <h3 className="text-sm text-gray-400 mb-2">
-          Bot Logs ({logs.length})
+          Trading Activity ({logs.length})
         </h3>
 
-        <div className="bg-black rounded-lg p-3 space-y-2 text-xs max-h-60 overflow-y-auto font-mono">
+        <div className="bg-black rounded-lg p-3 text-xs font-mono">
+
           {logs.map((log, i) => {
-            if (typeof log.message === "string") {
+
+            if (log.type === "system") {
+
               return (
-                <p
-                  key={i}
-                  className="text-gray-400 bg-gray-800/20 rounded px-2 py-1"
-                >
+                <p key={i} className="text-gray-400 py-1">
                   [{log.time}] {log.message}
                 </p>
               );
             }
 
-            const { symbol, side, price, size, pnl } = log.message;
-
             return (
               <div
                 key={i}
-                className="bg-black border-b border-gray-800 px-3 py-2"
+                className="grid grid-cols-5 gap-2 py-1 border-b border-gray-800"
               >
-                <div className="flex justify-between">
-                  <span className="text-gray-500">[{log.time}]</span>
-                  <span
-                    className={side === "BUY" ? "text-green-400" : "text-red-400"}
-                  >
-                    {side}
-                  </span>
-                </div>
 
-                <div className="flex justify-between mt-1">
-                  <span className="text-yellow-400">{symbol}</span>
-                  <span className="text-gray-400">
-                    {size} @ {price}
-                  </span>
-                </div>
+                <span className="text-gray-500">[{log.time}]</span>
 
-                <div className="mt-1">
-                  <span
-                    className={
-                      pnl >= 0
-                        ? "text-green-400 font-semibold"
-                        : "text-red-400 font-semibold"
-                    }
-                  >
-                    P/L: {pnl >= 0 ? "+" : "-"}${Math.abs(pnl)}
-                  </span>
-                </div>
+                <span className="text-yellow-400">{log.symbol}</span>
+
+                <span
+                  className={
+                    log.side === "BUY"
+                      ? "text-green-400 font-semibold"
+                      : "text-red-400 font-semibold"
+                  }
+                >
+                  {log.side}
+                </span>
+
+                <span className="text-gray-300">
+                  {log.size} @ {log.price}
+                </span>
+
+                <span
+                  className={
+                    log.pnl >= 0
+                      ? "text-green-400 font-semibold"
+                      : "text-red-400 font-semibold"
+                  }
+                >
+                  {log.pnl >= 0 ? "+" : "-"}${Math.abs(log.pnl)}
+                </span>
+
               </div>
             );
           })}
+
         </div>
+
       </div>
+
     </div>
   );
 }
 
-/* ---------- STAT CARD ---------- */
 function StatCard({ label, value, accent }) {
+
   const accents = {
     green: "border-green-500",
     purple: "border-purple-500",
